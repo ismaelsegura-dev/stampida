@@ -10,5 +10,7 @@ certs/*.pem
 certs/*.p12
 *.json
 !package.json
+!tsconfig.json
+!vercel.json
 google-credentials.json
 .vercel
