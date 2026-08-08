@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Merchant {
+  id              String     @id @default(cuid())
+  nombre          String
+  email           String     @unique
+  password        String
+  logoUrl         String?
+  colorPrimario   String     @default("#000000")
+  sellosParaPremio Int       @default(8)
+  textoPremio     String     @default("Café gratis")
+  lat             Float?
+  lng             Float?
+  radioMetros     Int        @default(300)
+  mensajeProximidad String   @default("¡Estás cerca! Pásate y suma tu sello")
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  customers       Customer[]
+  campaigns       Campaign[]
+}
+
+model Customer {
+  id              String     @id @default(cuid())
+  merchantId      String
+  merchant        Merchant   @relation(fields: [merchantId], references: [id])
+  nombre          String
+  telefono        String?
+  serialNumber    String     @unique
+  authToken       String     @unique
+  sellos          Int        @default(0)
+  premiosCanjeados Int       @default(0)
+  pushToken       String?
+  googleObjectId  String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  stampEvents     StampEvent[]
+}
+
+model StampEvent {
+  id              String     @id @default(cuid())
+  customerId      String
+  customer        Customer   @relation(fields: [customerId], references: [id])
+  tipo            String     // "sello" | "canje"
+  nota            String?
+  createdAt       DateTime   @default(now())
+}
+
+model Campaign {
+  id              String     @id @default(cuid())
+  merchantId      String
+  merchant        Merchant   @relation(fields: [merchantId], references: [id])
+  mensaje         String
+  enviadaAt       DateTime   @default(now())
+}

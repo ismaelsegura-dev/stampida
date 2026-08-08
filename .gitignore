@@ -1,0 +1,14 @@
+.DS_Store
+node_modules/
+.next/
+out/
+.env
+.env.local
+*.db
+prisma/dev.db
+certs/*.pem
+certs/*.p12
+*.json
+!package.json
+google-credentials.json
+.vercel
