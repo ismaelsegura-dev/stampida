@@ -44,7 +44,7 @@ export async function createGoogleLoyaltyClass(merchantId: string) {
     issuerName: merchant.nombre,
     programName: `${merchant.nombre} Fidelidad`,
     hexBackgroundColor: merchant.colorPrimario || '#000000',
-    reviewStatus: 'APPROVED',
+    reviewStatus: 'UNDER_REVIEW',
     textModulesData: [
       {
         header: 'Premio',
