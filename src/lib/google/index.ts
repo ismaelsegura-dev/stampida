@@ -3,9 +3,16 @@ import { prisma } from '@/lib/prisma';
 
 let auth: JWT | null = null;
 
+function getGoogleCredentials() {
+  let raw = (process.env.GOOGLE_SERVICE_ACCOUNT_JSON || '').trim();
+  if (raw.startsWith("'") && raw.endsWith("'")) raw = raw.slice(1, -1);
+  if (raw.startsWith('"') && raw.endsWith('"')) raw = raw.slice(1, -1);
+  return JSON.parse(raw);
+}
+
 function getAuth() {
   if (!auth) {
-    const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON || '{}');
+    const credentials = getGoogleCredentials();
     auth = new JWT({
       email: credentials.client_email,
       key: credentials.private_key,
@@ -196,7 +203,7 @@ export async function generateGoogleSaveUrl(customerId: string) {
   const issuerId = process.env.GOOGLE_ISSUER_ID;
   const objectId = `${issuerId}.${customer.serialNumber}`;
 
-  const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON || '{}');
+  const credentials = getGoogleCredentials();
 
   const { SignJWT } = await import('jose');
   const privateKey = await import('crypto').then(crypto => 
