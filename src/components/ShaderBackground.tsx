@@ -522,8 +522,8 @@ export function ShaderBackground({ className }: { className?: string }) {
       mouseY += (targetY - mouseY) * follow
       cursorPresence += (targetPresence - cursorPresence) * follow
       resizeCanvas()
-      const width = canvas.width
-      const height = canvas.height
+      const width = canvas!.width
+      const height = canvas!.height
       gl.uniform4f(
         uni.scene,
         width,
