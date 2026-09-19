@@ -29,42 +29,38 @@ export async function createGoogleLoyaltyClass(merchantId: string) {
   const issuerId = process.env.GOOGLE_ISSUER_ID;
   const classId = `${issuerId}.${merchantId}`;
 
+  const merchant = await prisma.merchant.findUnique({ where: { id: merchantId } });
+  if (!merchant) throw new Error('Merchant not found');
+
+  const classData: any = {
+    id: classId,
+    issuerName: merchant.nombre,
+    programName: `${merchant.nombre} Fidelidad`,
+    hexBackgroundColor: merchant.colorPrimario || '#000000',
+    reviewStatus: 'APPROVED',
+    textModulesData: [
+      {
+        header: 'Premio',
+        body: merchant.textoPremio,
+        id: 'reward',
+      },
+    ],
+    programLogo: merchant.logoUrl
+      ? { sourceUri: { uri: merchant.logoUrl } }
+      : {
+          sourceUri: {
+            uri: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=500&h=500&fit=crop',
+          },
+        },
+  };
+
   try {
     await makeRequest('GET', `https://walletobjects.googleapis.com/walletobjects/v1/loyaltyClass/${classId}`);
+    const { id, ...updateData } = classData;
+    await makeRequest('PATCH', `https://walletobjects.googleapis.com/walletobjects/v1/loyaltyClass/${classId}`, updateData);
     return classId;
   } catch (e) {
-    const merchant = await prisma.merchant.findUnique({ where: { id: merchantId } });
-    if (!merchant) throw new Error('Merchant not found');
-
-    const classData: any = {
-      id: classId,
-      issuerName: merchant.nombre,
-      programName: `${merchant.nombre} Fidelidad`,
-      hexBackgroundColor: merchant.colorPrimario || '#000000',
-      reviewStatus: 'APPROVED',
-      textModulesData: [
-        {
-          header: 'Premio',
-          body: merchant.textoPremio,
-          id: 'reward',
-        },
-      ],
-    };
-
-    if (merchant.logoUrl) {
-      classData.programLogo = { 
-        sourceUri: { uri: merchant.logoUrl }
-      };
-    } else {
-      classData.programLogo = { 
-        sourceUri: { 
-          uri: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=500&h=500&fit=crop'
-        }
-      };
-    }
-
     await makeRequest('POST', 'https://walletobjects.googleapis.com/walletobjects/v1/loyaltyClass', classData);
-
     return classId;
   }
 }
@@ -114,6 +110,11 @@ export async function createGoogleLoyaltyObject(customerId: string) {
           description: 'Ver tarjeta',
           id: 'view_card',
         },
+        {
+          uri: 'https://stampida.online',
+          description: 'Powered by Stampida',
+          id: 'powered_by',
+        },
       ],
     },
   };
@@ -150,6 +151,38 @@ export async function updateGoogleLoyaltyObject(customerId: string) {
       },
     ],
   });
+}
+
+export async function sendGoogleWalletMessage(customerId: string, header: string, body: string) {
+  const customer = await prisma.customer.findUnique({
+    where: { id: customerId },
+    include: { merchant: true },
+  });
+
+  if (!customer || !customer.googleObjectId) return false;
+
+  const objectUrl = `https://walletobjects.googleapis.com/walletobjects/v1/loyaltyObject/${customer.googleObjectId}`;
+
+  let existingMessages: any[] = [];
+  try {
+    const current: any = await makeRequest('GET', objectUrl);
+    existingMessages = current.messages || [];
+  } catch (e) {
+    return false;
+  }
+
+  const messages = [
+    ...existingMessages,
+    {
+      id: `msg_${Date.now()}`,
+      header,
+      body,
+      messageType: 'TEXT_AND_NOTIFY',
+    },
+  ].slice(-10);
+
+  await makeRequest('PATCH', objectUrl, { messages });
+  return true;
 }
 
 export async function generateGoogleSaveUrl(customerId: string) {

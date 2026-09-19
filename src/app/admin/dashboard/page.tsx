@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 import QRCode from 'qrcode';
 import CampaignForm from './CampaignForm';
+import SettingsForm from './SettingsForm';
 
 export default async function Dashboard() {
   const session = await requireAuth();
@@ -65,6 +66,22 @@ export default async function Dashboard() {
             <img src={qrCode} alt="QR Code" className="bg-white p-4 rounded-lg" />
           </div>
           <p className="text-center text-gray-400 mt-4 text-sm">{joinUrl}</p>
+        </div>
+
+        <div className="bg-[#1A1A1A] rounded-lg p-6 mb-8">
+          <h2 className="text-xl font-bold text-white mb-4">Personalización de la Tarjeta</h2>
+          <SettingsForm
+            initial={{
+              logoUrl: merchant.logoUrl || '',
+              colorPrimario: merchant.colorPrimario,
+              sellosParaPremio: merchant.sellosParaPremio,
+              textoPremio: merchant.textoPremio,
+              lat: merchant.lat?.toString() || '',
+              lng: merchant.lng?.toString() || '',
+              radioMetros: merchant.radioMetros,
+              mensajeProximidad: merchant.mensajeProximidad,
+            }}
+          />
         </div>
 
         <div className="bg-[#1A1A1A] rounded-lg p-6 mb-8">

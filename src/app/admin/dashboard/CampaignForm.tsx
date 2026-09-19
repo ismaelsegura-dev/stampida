@@ -17,10 +17,16 @@ export default function CampaignForm() {
         body: JSON.stringify({ mensaje }),
       });
       
+      const data = await res.json().catch(() => ({}));
+
       if (res.ok) {
-        alert('Campaña enviada');
+        const google = data.googleEnviados ?? 0;
+        const apple = data.appleEnviados ?? 0;
+        alert(`Campaña enviada: ${google} notificaciones Google Wallet, ${apple} Apple Wallet (de ${data.destinatarios ?? 0} clientes)`);
         setMensaje('');
         window.location.reload();
+      } else {
+        alert(data.error || 'Error al enviar la campaña');
       }
     } catch (error) {
       console.error('Error:', error);

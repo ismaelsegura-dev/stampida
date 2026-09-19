@@ -28,14 +28,34 @@ export async function POST(req: NextRequest) {
       where: { merchantId },
     });
 
+    let googleEnviados = 0;
+    let appleEnviados = 0;
+
+    const merchant = await prisma.merchant.findUnique({ where: { id: merchantId } });
+
     for (const customer of customers) {
-      try {
-        if (customer.pushToken) {
+      if (customer.pushToken) {
+        try {
           const { sendApplePush } = await import('@/lib/apple');
           await sendApplePush(customer.pushToken);
+          appleEnviados++;
+        } catch (err) {
+          console.error('Error sending Apple push to customer:', customer.id, err);
         }
-      } catch (err) {
-        console.error('Error sending push to customer:', customer.id, err);
+      }
+
+      if (customer.googleObjectId) {
+        try {
+          const { sendGoogleWalletMessage } = await import('@/lib/google');
+          const ok = await sendGoogleWalletMessage(
+            customer.id,
+            merchant?.nombre || 'Novedad',
+            mensaje
+          );
+          if (ok) googleEnviados++;
+        } catch (err) {
+          console.error('Error sending Google message to customer:', customer.id, err);
+        }
       }
     }
 
@@ -43,6 +63,8 @@ export async function POST(req: NextRequest) {
       success: true,
       campaignId: campaign.id,
       destinatarios: customers.length,
+      googleEnviados,
+      appleEnviados,
     });
   } catch (error) {
     console.error('Campaign error:', error);

@@ -9,6 +9,7 @@ export default function Register() {
     nombre: '',
     email: '',
     password: '',
+    logoUrl: '',
     colorPrimario: '#000000',
     sellosParaPremio: 8,
     textoPremio: 'Café gratis',
@@ -96,6 +97,20 @@ export default function Register() {
               className="w-full px-4 py-2 bg-[#0A0A0A] border border-gray-700 rounded-lg text-white focus:outline-none focus:border-white"
               required
               minLength={6}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              URL del Logo (imagen cuadrada, accesible públicamente)
+            </label>
+            <input
+              type="url"
+              name="logoUrl"
+              value={formData.logoUrl}
+              onChange={handleChange}
+              placeholder="https://ejemplo.com/logo.png"
+              className="w-full px-4 py-2 bg-[#0A0A0A] border border-gray-700 rounded-lg text-white focus:outline-none focus:border-white"
             />
           </div>
 
