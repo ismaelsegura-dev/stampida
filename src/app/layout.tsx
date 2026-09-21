@@ -1,14 +1,8 @@
 import type { Metadata } from 'next';
-import { Inter, Fraunces } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
-const fraunces = Fraunces({
-  subsets: ['latin'],
-  variable: '--font-fraunces',
-  style: ['normal', 'italic'],
-  axes: ['SOFT', 'WONK', 'opsz'],
-});
 
 export const metadata: Metadata = {
   title: 'Stampida — Fidelización en el wallet de tus clientes',
@@ -22,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className={`${inter.variable} ${fraunces.variable}`}>
+    <html lang="es" className={inter.variable}>
       <body className="font-sans antialiased">{children}</body>
     </html>
   );
