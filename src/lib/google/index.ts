@@ -204,6 +204,7 @@ export async function generateGoogleSaveUrl(customerId: string) {
   const objectId = `${issuerId}.${customer.serialNumber}`;
 
   const credentials = getGoogleCredentials();
+  const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
 
   const { SignJWT } = await import('jose');
   const privateKey = await import('crypto').then(crypto => 
@@ -216,9 +217,10 @@ export async function generateGoogleSaveUrl(customerId: string) {
     typ: 'savetowallet',
     payload: {
       loyaltyObjects: [{ id: objectId }],
+      origins: [baseUrl],
     },
   })
-    .setProtectedHeader({ alg: 'RS256' })
+    .setProtectedHeader({ alg: 'RS256', kid: credentials.private_key_id })
     .setIssuedAt()
     .setExpirationTime('1h')
     .sign(privateKey);
