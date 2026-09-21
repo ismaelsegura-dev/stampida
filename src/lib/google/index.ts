@@ -213,12 +213,13 @@ export async function generateGoogleSaveUrl(customerId: string) {
   const jwt = await new SignJWT({
     iss: credentials.client_email,
     aud: 'google',
-    typ: 'savetoandroidpay',
+    typ: 'savetowallet',
     payload: {
-      loyaltyObjects: [objectId],
+      loyaltyObjects: [{ id: objectId }],
     },
   })
     .setProtectedHeader({ alg: 'RS256' })
+    .setIssuedAt()
     .setExpirationTime('1h')
     .sign(privateKey);
 
