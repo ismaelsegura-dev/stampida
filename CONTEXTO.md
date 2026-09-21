@@ -995,3 +995,61 @@ npx tsx prisma/seed.ts
 ---
 
 **¡Buena suerte con la demo mañana!** 🚀☕
+
+---
+
+# 📅 SESIÓN: Puesta en producción (19-21 sept 2026)
+
+## ✅ Estado actual: EN PRODUCCIÓN
+
+- **URL**: https://stampida.online (redirige a www.stampida.online)
+- **Hosting**: Vercel (proyecto re-importado desde GitHub `ismaelsegura-dev/stampida`, rama `main`, auto-deploy en cada push)
+- **Base de datos**: Neon Postgres (eu-west-2), tablas creadas + seed demo ejecutado
+- **Merchant demo**: Cafetería La Plaza — ID `cmu89vzv30000qna2trz3cc8v` (¡ojo! distinto al ID viejo de SQLite)
+- **Login demo**: demo@cafeterialaplaza.com / demo123
+- **Landing de alta demo**: https://stampida.online/join/cmu89vzv30000qna2trz3cc8v
+
+### Variables de entorno en Vercel (Production)
+`DATABASE_URL` (Neon), `BASE_URL`, `NEXTAUTH_URL`, `NEXTAUTH_SECRET`, `GOOGLE_ISSUER_ID`, `GOOGLE_SERVICE_ACCOUNT_JSON`
+
+## 🆕 Funcionalidades añadidas en esta sesión
+
+1. **Push masivo Google Wallet (CLAVE)**: `src/lib/google/index.ts` → `sendGoogleWalletMessage()`. Las campañas del dashboard ahora hacen PATCH a cada loyaltyObject añadiendo un mensaje con `messageType: 'TEXT_AND_NOTIFY'` → el cliente recibe notificación real en su móvil. `api/campaigns/route.ts` devuelve contadores `googleEnviados`/`appleEnviados`.
+2. **"Powered by Stampida"** en todas las tarjetas (linksModuleData del objeto, apunta a stampida.online).
+3. **Personalización editable**: nueva sección en el dashboard (`SettingsForm.tsx` + `PATCH /api/merchants`) para logo, color, sellos, premio, ubicación, radio y mensaje de proximidad. Al guardar se re-sincroniza la LoyaltyClass de Google automáticamente (`createGoogleLoyaltyClass` ahora hace PATCH si la clase ya existe).
+4. **Landing renovada**: shader WebGL "Halftone Dots" (blanco/negro, neutro) en `src/components/ShaderBackground.tsx`, hero con panel `bg-black/70 backdrop-blur` para legibilidad + sección de 3 features (Sin apps / Notificaciones push / Sellos y premios).
+5. Registro de comercios ahora acepta `logoUrl`.
+
+## 🐛 Fixes aplicados (importantes, no deshacer)
+
+- `tsconfig.json`: excluido `grupo-bono/` (proyecto aparte, rompía el build).
+- `vercel.json`: eliminada `"regions": ["mad1"]` (no soportado en plan Hobby → error "Invalid region selector").
+- `GOOGLE_SERVICE_ACCOUNT_JSON`: parseo tolerante a comillas simples/dobles envolventes (Vercel las conserva si se pegan).
+- Google LoyaltyClass: `reviewStatus: 'UNDER_REVIEW'` (la API ya NO acepta `'APPROVED'` al crear: "Invalid review status").
+- JWT de guardado de Google Wallet: formato canónico — `typ: 'savetowallet'` (no 'savetoandroidpay'), `payload.loyaltyObjects: [{ id }]` (objeto, no string suelto), `iat`, `kid` en header y `origins: [BASE_URL]`.
+
+## 🔴 BLOQUEO ACTUAL: Google Wallet en modo demo
+
+**Síntoma**: el saveUrl (`pay.google.com/gp/w/save/<jwt>`) devuelve 404 para todo el mundo.
+
+**Descartado** (verificado por API): JWT bien formado y firma válida contra el cert X509 de la service account, LoyaltyObject `state: active`, LoyaltyClass `reviewStatus: approved`.
+
+**Causa**: la cuenta emisora `3388000000023181631` está en **modo demo** — Google solo deja guardar pases a "test users" hasta que apruebe la verificación de empresa.
+
+**Qué se hizo**: se rellenó el formulario de verificación en https://pay.google.com/business/console (nombre público Stampida, MCC 4816, web stampida.online, email/teléfono de soporte con formato +34...). LEI se deja vacío (opcional).
+
+**Pendiente**:
+- [ ] Esperar aprobación de Google (horas a 2-3 días)
+- [ ] Mientras tanto: añadir el Gmail del móvil de pruebas como **test user** en la consola del emisor para poder probar el guardado (los pases saldrán con etiqueta "TEST ONLY", todo lo demás funciona igual)
+
+## ▶️ PRÓXIMOS PASOS (en orden)
+
+1. **Cuando Google apruebe (o con test user)**: prueba end-to-end en Motorola:
+   - Alta desde `/join/cmu89vzv30000qna2trz3cc8v` → Guardar en Google Wallet
+   - Escanear sello desde `/scan` → verificar que la tarjeta se actualiza
+   - Enviar campaña desde dashboard → verificar notificación push en el móvil
+2. **Alta de la cafetería cliente real**: registrar comercio (nombre, logo URL, color, premio, lat/lng para proximidad) → imprimir su QR de alta
+3. **Opcional recomendado**: cambiar `BASE_URL` y `NEXTAUTH_URL` en Vercel a `https://www.stampida.online` (evita redirect 308 en los QR) + Redeploy
+4. **Proximidad**: al dar de alta el comercio real con lat/lng, Google Wallet avisa automáticamente al pasar cerca (el texto de la notificación lo pone Google; el `mensajeProximidad` personalizado solo se usa en Apple Wallet)
+5. **Apple Wallet**: cuando se pague la licencia Apple Developer ($99/año) — toda la infraestructura ya está en el código (`src/lib/apple/`, endpoints `/api/apple/v1/*`)
+6. **Legal antes de cobrar**: página de privacidad/términos en la web (RGPD) — Google y los comercios lo pedirán
