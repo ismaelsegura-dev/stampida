@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input, Textarea, Label } from '@/components/ui/input';
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -10,7 +13,7 @@ export default function Register() {
     email: '',
     password: '',
     logoUrl: '',
-    colorPrimario: '#000000',
+    colorPrimario: '#0A0A0A',
     sellosParaPremio: 8,
     textoPremio: 'Café gratis',
     lat: '',
@@ -19,11 +22,13 @@ export default function Register() {
     mensajeProximidad: '¡Estás cerca! Pásate y suma tu sello',
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     try {
       const res = await fetch('/api/auth/register', {
@@ -40,6 +45,7 @@ export default function Register() {
       router.push('/admin/login');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
+      setLoading(false);
     }
   };
 
@@ -52,182 +58,100 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] py-12 px-4">
-      <div className="max-w-2xl mx-auto bg-[#1A1A1A] rounded-lg p-8">
-        <h1 className="text-3xl font-bold text-white mb-6">Registro de Comercio</h1>
+    <div className="min-h-screen bg-paper px-4 py-12">
+      <div className="mx-auto w-full max-w-xl">
+        <Link href="/" className="mb-8 block text-center font-display text-3xl italic text-ink">
+          Stampida
+        </Link>
+        <Card className="p-6 sm:p-8">
+          <h1 className="mb-1 text-xl font-semibold">Registra tu comercio</h1>
+          <p className="mb-6 text-sm text-stone-500">
+            Tu tarjeta de fidelización lista en minutos.
+          </p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Nombre del Comercio
-            </label>
-            <input
-              type="text"
-              name="nombre"
-              value={formData.nombre}
-              onChange={handleChange}
-              className="w-full px-4 py-2 bg-[#0A0A0A] border border-gray-700 rounded-lg text-white focus:outline-none focus:border-white"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Email
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full px-4 py-2 bg-[#0A0A0A] border border-gray-700 rounded-lg text-white focus:outline-none focus:border-white"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Contraseña
-            </label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full px-4 py-2 bg-[#0A0A0A] border border-gray-700 rounded-lg text-white focus:outline-none focus:border-white"
-              required
-              minLength={6}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              URL del Logo (imagen cuadrada, accesible públicamente)
-            </label>
-            <input
-              type="url"
-              name="logoUrl"
-              value={formData.logoUrl}
-              onChange={handleChange}
-              placeholder="https://ejemplo.com/logo.png"
-              className="w-full px-4 py-2 bg-[#0A0A0A] border border-gray-700 rounded-lg text-white focus:outline-none focus:border-white"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Color Primario
-              </label>
-              <input
-                type="color"
-                name="colorPrimario"
-                value={formData.colorPrimario}
-                onChange={handleChange}
-                className="w-full h-10 bg-[#0A0A0A] border border-gray-700 rounded-lg cursor-pointer"
-              />
+              <Label htmlFor="nombre">Nombre del comercio</Label>
+              <Input id="nombre" name="nombre" value={formData.nombre} onChange={handleChange} required />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" name="email" value={formData.email} onChange={handleChange} required />
+              </div>
+              <div>
+                <Label htmlFor="password">Contraseña</Label>
+                <Input id="password" type="password" name="password" value={formData.password} onChange={handleChange} minLength={6} required />
+              </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Sellos para Premio
-              </label>
-              <input
-                type="number"
-                name="sellosParaPremio"
-                value={formData.sellosParaPremio}
-                onChange={handleChange}
-                min="1"
-                className="w-full px-4 py-2 bg-[#0A0A0A] border border-gray-700 rounded-lg text-white focus:outline-none focus:border-white"
-                required
-              />
+              <Label htmlFor="logoUrl">URL del logo (opcional)</Label>
+              <Input id="logoUrl" type="url" name="logoUrl" value={formData.logoUrl} onChange={handleChange} placeholder="https://ejemplo.com/logo.png" />
+              <p className="mt-1 text-xs text-stone-400">Imagen cuadrada accesible públicamente</p>
             </div>
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Texto del Premio
-            </label>
-            <input
-              type="text"
-              name="textoPremio"
-              value={formData.textoPremio}
-              onChange={handleChange}
-              className="w-full px-4 py-2 bg-[#0A0A0A] border border-gray-700 rounded-lg text-white focus:outline-none focus:border-white"
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Latitud
-              </label>
-              <input
-                type="number"
-                name="lat"
-                value={formData.lat}
-                onChange={handleChange}
-                step="any"
-                className="w-full px-4 py-2 bg-[#0A0A0A] border border-gray-700 rounded-lg text-white focus:outline-none focus:border-white"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="colorPrimario">Color de la tarjeta</Label>
+                <input
+                  id="colorPrimario"
+                  type="color"
+                  name="colorPrimario"
+                  value={formData.colorPrimario}
+                  onChange={handleChange}
+                  className="h-10 w-full cursor-pointer rounded-xl border border-line bg-white"
+                />
+              </div>
+              <div>
+                <Label htmlFor="sellosParaPremio">Sellos para premio</Label>
+                <Input id="sellosParaPremio" type="number" name="sellosParaPremio" value={formData.sellosParaPremio} onChange={handleChange} min="1" required />
+              </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Longitud
-              </label>
-              <input
-                type="number"
-                name="lng"
-                value={formData.lng}
-                onChange={handleChange}
-                step="any"
-                className="w-full px-4 py-2 bg-[#0A0A0A] border border-gray-700 rounded-lg text-white focus:outline-none focus:border-white"
-              />
+              <Label htmlFor="textoPremio">Premio</Label>
+              <Input id="textoPremio" name="textoPremio" value={formData.textoPremio} onChange={handleChange} required />
             </div>
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Radio de Proximidad (metros)
-            </label>
-            <input
-              type="number"
-              name="radioMetros"
-              value={formData.radioMetros}
-              onChange={handleChange}
-              min="50"
-              className="w-full px-4 py-2 bg-[#0A0A0A] border border-gray-700 rounded-lg text-white focus:outline-none focus:border-white"
-            />
-          </div>
+            <details className="rounded-xl border border-line p-4">
+              <summary className="cursor-pointer text-sm font-medium text-stone-600">
+                Ubicación y avisos de proximidad (opcional)
+              </summary>
+              <div className="mt-4 space-y-4">
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                  <div>
+                    <Label htmlFor="lat">Latitud</Label>
+                    <Input id="lat" type="number" name="lat" value={formData.lat} onChange={handleChange} step="any" />
+                  </div>
+                  <div>
+                    <Label htmlFor="lng">Longitud</Label>
+                    <Input id="lng" type="number" name="lng" value={formData.lng} onChange={handleChange} step="any" />
+                  </div>
+                  <div className="col-span-2 sm:col-span-1">
+                    <Label htmlFor="radioMetros">Radio (m)</Label>
+                    <Input id="radioMetros" type="number" name="radioMetros" value={formData.radioMetros} onChange={handleChange} min="50" />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="mensajeProximidad">Mensaje de proximidad</Label>
+                  <Textarea id="mensajeProximidad" name="mensajeProximidad" value={formData.mensajeProximidad} onChange={handleChange} rows={2} />
+                </div>
+              </div>
+            </details>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Mensaje de Proximidad
-            </label>
-            <textarea
-              name="mensajeProximidad"
-              value={formData.mensajeProximidad}
-              onChange={handleChange}
-              rows={2}
-              className="w-full px-4 py-2 bg-[#0A0A0A] border border-gray-700 rounded-lg text-white focus:outline-none focus:border-white"
-            />
-          </div>
+            {error && <p className="text-sm text-red-600">{error}</p>}
 
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+            <Button type="submit" full disabled={loading}>
+              {loading ? 'Registrando…' : 'Registrar comercio'}
+            </Button>
+          </form>
+        </Card>
 
-          <button
-            type="submit"
-            className="w-full py-3 bg-white text-black rounded-lg font-semibold hover:bg-gray-200 transition"
-          >
-            Registrar Comercio
-          </button>
-        </form>
-
-        <p className="text-center text-gray-400 mt-6">
+        <p className="mt-6 text-center text-sm text-stone-500">
           ¿Ya tienes cuenta?{' '}
-          <Link href="/admin/login" className="text-white hover:underline">
+          <Link href="/admin/login" className="font-medium text-ink hover:underline">
             Acceder
           </Link>
         </p>

@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export default function ScanPage() {
   const [scanning, setScanning] = useState(false);
@@ -75,63 +77,75 @@ export default function ScanPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center px-4">
-      <div className="max-w-md w-full">
-        <h1 className="text-3xl font-bold text-white text-center mb-8">Escanear QR</h1>
+    <div className="flex min-h-screen flex-col bg-paper">
+      <header className="border-b border-line">
+        <div className="mx-auto flex max-w-md items-center justify-between px-5 py-4">
+          <Link href="/admin/dashboard" className="font-display text-xl italic">
+            Stampida
+          </Link>
+          <span className="text-sm text-stone-500">Escáner</span>
+        </div>
+      </header>
 
-        {!scanning && !result && (
-          <button
-            onClick={startScan}
-            className="w-full py-4 bg-white text-black rounded-lg font-semibold hover:bg-gray-200 transition"
-          >
-            Iniciar Escáner
-          </button>
-        )}
+      <main className="flex flex-1 items-center justify-center px-4 py-10">
+        <div className="w-full max-w-md">
+          <h1 className="mb-8 text-center font-display text-3xl tracking-tight">
+            Escanear tarjeta
+          </h1>
 
-        {scanning && (
-          <div>
-            <div id="reader" className="rounded-lg overflow-hidden"></div>
-            <button
-              onClick={() => {
-                scannerRef.current?.stop();
-                setScanning(false);
-              }}
-              className="w-full mt-4 py-3 bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-600 transition"
+          {!scanning && !result && (
+            <Button onClick={startScan} full>
+              Iniciar escáner
+            </Button>
+          )}
+
+          {scanning && (
+            <div>
+              <div id="reader" className="overflow-hidden rounded-2xl border border-line bg-white"></div>
+              <Button
+                variant="secondary"
+                full
+                className="mt-4"
+                onClick={() => {
+                  scannerRef.current?.stop();
+                  setScanning(false);
+                }}
+              >
+                Cancelar
+              </Button>
+            </div>
+          )}
+
+          {result && (
+            <div
+              className={`rounded-3xl p-8 text-center text-white ${
+                result.premio ? 'bg-green-600' : result.success ? 'bg-ink' : 'bg-red-600'
+              }`}
             >
-              Cancelar
-            </button>
-          </div>
-        )}
-
-        {result && (
-          <div
-            className={`p-8 rounded-lg text-center ${
-              result.premio ? 'bg-green-600' : result.success ? 'bg-blue-600' : 'bg-red-600'
-            }`}
-          >
-            {result.premio && (
-              <div className="mb-4">
-                <svg className="w-20 h-20 mx-auto text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-            )}
-            <h2 className="text-3xl font-bold text-white mb-4">
-              {result.premio ? '¡PREMIO!' : result.success ? '¡Sello añadido!' : 'Error'}
-            </h2>
-            <p className="text-white text-lg mb-6">{result.message}</p>
-            <button
-              onClick={() => {
-                setResult(null);
-                startScan();
-              }}
-              className="w-full py-3 bg-white text-black rounded-lg font-semibold hover:bg-gray-200 transition"
-            >
-              Escanear otro
-            </button>
-          </div>
-        )}
-      </div>
+              {result.premio && (
+                <div className="mb-4">
+                  <svg className="mx-auto h-20 w-20 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              )}
+              <h2 className="mb-3 font-display text-3xl">
+                {result.premio ? '¡Premio!' : result.success ? '¡Sello añadido!' : 'Error'}
+              </h2>
+              <p className="mb-6 text-lg opacity-90">{result.message}</p>
+              <button
+                onClick={() => {
+                  setResult(null);
+                  startScan();
+                }}
+                className="w-full rounded-full bg-white py-3 font-semibold text-ink transition hover:bg-stone-100"
+              >
+                Escanear otro
+              </button>
+            </div>
+          )}
+        </div>
+      </main>
     </div>
   );
 }

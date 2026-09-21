@@ -4,6 +4,7 @@ import Link from 'next/link';
 import QRCode from 'qrcode';
 import CampaignForm from './CampaignForm';
 import SettingsForm from './SettingsForm';
+import { Card, CardTitle } from '@/components/ui/card';
 
 export default async function Dashboard() {
   const session = await requireAuth();
@@ -31,45 +32,68 @@ export default async function Dashboard() {
   const joinUrl = `${process.env.BASE_URL || 'http://localhost:3000'}/join/${merchantId}`;
   const qrCode = await QRCode.toDataURL(joinUrl, { width: 300, margin: 2 });
 
+  const stats = [
+    { label: 'Clientes', value: totalCustomers },
+    { label: 'Sellos para premio', value: merchant.sellosParaPremio },
+    { label: 'Premio', value: merchant.textoPremio },
+  ];
+
   return (
-    <div className="min-h-screen bg-[#0A0A0A] py-8 px-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-white">{merchant.nombre}</h1>
+    <div className="min-h-screen bg-paper">
+      <header className="sticky top-0 z-10 border-b border-line bg-paper/80 backdrop-blur">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-4">
+          <div className="flex items-baseline gap-3">
+            <Link href="/" className="font-display text-xl italic">
+              Stampida
+            </Link>
+            <span className="text-sm text-stone-500">{merchant.nombre}</span>
+          </div>
           <Link
             href="/scan"
-            className="px-6 py-3 bg-white text-black rounded-lg font-semibold hover:bg-gray-200 transition"
+            className="rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-stone-800"
           >
             Escanear QR
           </Link>
         </div>
+      </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-[#1A1A1A] rounded-lg p-6">
-            <p className="text-gray-400 text-sm">Total Clientes</p>
-            <p className="text-4xl font-bold text-white mt-2">{totalCustomers}</p>
-          </div>
-          <div className="bg-[#1A1A1A] rounded-lg p-6">
-            <p className="text-gray-400 text-sm">Sellos para Premio</p>
-            <p className="text-4xl font-bold text-white mt-2">{merchant.sellosParaPremio}</p>
-          </div>
-          <div className="bg-[#1A1A1A] rounded-lg p-6">
-            <p className="text-gray-400 text-sm">Premio</p>
-            <p className="text-xl font-bold text-white mt-2">{merchant.textoPremio}</p>
-          </div>
+      <main className="mx-auto max-w-5xl space-y-6 px-5 py-8">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {stats.map((s) => (
+            <Card key={s.label}>
+              <p className="text-sm text-stone-500">{s.label}</p>
+              <p className="mt-1 truncate font-display text-3xl">{s.value}</p>
+            </Card>
+          ))}
         </div>
 
-        <div className="bg-[#1A1A1A] rounded-lg p-6 mb-8">
-          <h2 className="text-xl font-bold text-white mb-4">QR para Alta de Clientes</h2>
-          <p className="text-gray-400 mb-4">Imprime este QR y colócalo en tu establecimiento</p>
-          <div className="flex justify-center">
-            <img src={qrCode} alt="QR Code" className="bg-white p-4 rounded-lg" />
+        <Card>
+          <CardTitle>QR de alta de clientes</CardTitle>
+          <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-8">
+            <img
+              src={qrCode}
+              alt="QR de alta"
+              className="h-44 w-44 rounded-xl border border-line p-2"
+            />
+            <div className="text-center sm:text-left">
+              <p className="text-sm text-stone-600">
+                Imprime este QR y colócalo en tu establecimiento. Quien lo
+                escanee podrá guardar tu tarjeta en su wallet.
+              </p>
+              <p className="mt-3 break-all rounded-lg bg-stone-100 px-3 py-2 text-xs text-stone-500">
+                {joinUrl}
+              </p>
+            </div>
           </div>
-          <p className="text-center text-gray-400 mt-4 text-sm">{joinUrl}</p>
-        </div>
+        </Card>
 
-        <div className="bg-[#1A1A1A] rounded-lg p-6 mb-8">
-          <h2 className="text-xl font-bold text-white mb-4">Personalización de la Tarjeta</h2>
+        <Card>
+          <CardTitle>Nueva campaña</CardTitle>
+          <CampaignForm />
+        </Card>
+
+        <Card>
+          <CardTitle>Personalización de la tarjeta</CardTitle>
           <SettingsForm
             initial={{
               logoUrl: merchant.logoUrl || '',
@@ -82,61 +106,56 @@ export default async function Dashboard() {
               mensajeProximidad: merchant.mensajeProximidad,
             }}
           />
-        </div>
+        </Card>
 
-        <div className="bg-[#1A1A1A] rounded-lg p-6 mb-8">
-          <h2 className="text-xl font-bold text-white mb-4">Nueva Campaña</h2>
-          <CampaignForm />
-        </div>
-
-        <div className="bg-[#1A1A1A] rounded-lg p-6">
-          <h2 className="text-xl font-bold text-white mb-4">Clientes Recientes</h2>
-          <div className="space-y-3">
+        <Card>
+          <CardTitle>Clientes recientes</CardTitle>
+          <ul className="divide-y divide-line">
             {customers.map((customer) => (
-              <div
+              <li
                 key={customer.id}
-                className="flex justify-between items-center p-4 bg-[#0A0A0A] rounded-lg"
+                className="flex items-center justify-between py-3"
               >
-                <div>
-                  <p className="text-white font-medium">{customer.nombre}</p>
-                  <p className="text-gray-400 text-sm">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{customer.nombre}</p>
+                  <p className="text-xs text-stone-500">
                     {customer.telefono || 'Sin teléfono'}
                   </p>
                 </div>
-                <div className="text-right">
-                  <p className="text-white font-bold">
-                    {customer.sellos}/{merchant.sellosParaPremio} sellos
+                <div className="shrink-0 text-right">
+                  <p className="text-sm font-semibold">
+                    {customer.sellos}/{merchant.sellosParaPremio}
                   </p>
-                  <p className="text-gray-400 text-sm">
-                    {customer.premiosCanjeados} premios canjeados
+                  <p className="text-xs text-stone-500">
+                    {customer.premiosCanjeados} premios
                   </p>
                 </div>
-              </div>
+              </li>
             ))}
             {customers.length === 0 && (
-              <p className="text-gray-400 text-center py-8">
+              <li className="py-8 text-center text-sm text-stone-500">
                 Aún no hay clientes registrados
-              </p>
+              </li>
             )}
-          </div>
-        </div>
+          </ul>
+        </Card>
 
         {campaigns.length > 0 && (
-          <div className="bg-[#1A1A1A] rounded-lg p-6 mt-8">
-            <h2 className="text-xl font-bold text-white mb-4">Campañas Enviadas</h2>
-            <div className="space-y-3">
+          <Card>
+            <CardTitle>Campañas enviadas</CardTitle>
+            <ul className="divide-y divide-line">
               {campaigns.map((campaign) => (
-                <div key={campaign.id} className="p-4 bg-[#0A0A0A] rounded-lg">
-                  <p className="text-white">{campaign.mensaje}</p>
-                  <p className="text-gray-400 text-sm mt-2">
+                <li key={campaign.id} className="py-3">
+                  <p className="text-sm">{campaign.mensaje}</p>
+                  <p className="mt-1 text-xs text-stone-500">
                     {new Date(campaign.enviadaAt).toLocaleString('es-ES')}
                   </p>
-                </div>
+                </li>
               ))}
-            </div>
-          </div>
+            </ul>
+          </Card>
         )}
-      </div>
+      </main>
     </div>
   );
 }

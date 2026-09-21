@@ -1,35 +1,38 @@
 'use client';
 
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Textarea, Label } from '@/components/ui/input';
 
 export default function CampaignForm() {
   const [mensaje, setMensaje] = useState('');
   const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+    setFeedback('');
+
     try {
       const res = await fetch('/api/campaigns', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mensaje }),
       });
-      
+
       const data = await res.json().catch(() => ({}));
 
       if (res.ok) {
-        const google = data.googleEnviados ?? 0;
-        const apple = data.appleEnviados ?? 0;
-        alert(`Campaña enviada: ${google} notificaciones Google Wallet, ${apple} Apple Wallet (de ${data.destinatarios ?? 0} clientes)`);
+        setFeedback(
+          `Enviada: ${data.googleEnviados ?? 0} notificaciones Google Wallet, ${data.appleEnviados ?? 0} Apple Wallet (de ${data.destinatarios ?? 0} clientes)`
+        );
         setMensaje('');
-        window.location.reload();
       } else {
-        alert(data.error || 'Error al enviar la campaña');
+        setFeedback(data.error || 'Error al enviar la campaña');
       }
-    } catch (error) {
-      console.error('Error:', error);
+    } catch {
+      setFeedback('Error de conexión');
     } finally {
       setLoading(false);
     }
@@ -37,21 +40,24 @@ export default function CampaignForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <textarea
-        value={mensaje}
-        onChange={(e) => setMensaje(e.target.value)}
-        placeholder="Escribe tu mensaje para todos los clientes..."
-        rows={3}
-        className="w-full px-4 py-2 bg-[#0A0A0A] border border-gray-700 rounded-lg text-white focus:outline-none focus:border-white"
-        required
-      />
-      <button
-        type="submit"
-        disabled={loading}
-        className="px-6 py-2 bg-white text-black rounded-lg font-semibold hover:bg-gray-200 transition disabled:opacity-50"
-      >
-        {loading ? 'Enviando...' : 'Enviar a todos los clientes'}
-      </button>
+      <div>
+        <Label htmlFor="mensaje">Mensaje para todos tus clientes</Label>
+        <Textarea
+          id="mensaje"
+          value={mensaje}
+          onChange={(e) => setMensaje(e.target.value)}
+          placeholder="Ej: Hoy café de especialidad al 50% hasta las 12h"
+          rows={3}
+          required
+        />
+        <p className="mt-1 text-xs text-stone-400">
+          Llegará como notificación al móvil de cada cliente con tu tarjeta
+        </p>
+      </div>
+      {feedback && <p className="text-sm text-stone-600">{feedback}</p>}
+      <Button type="submit" disabled={loading}>
+        {loading ? 'Enviando…' : 'Enviar a todos'}
+      </Button>
     </form>
   );
 }
