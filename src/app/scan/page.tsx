@@ -18,28 +18,40 @@ export default function ScanPage() {
     };
   }, []);
 
+  const onScanSuccess = async (decodedText: string) => {
+    try {
+      await scannerRef.current?.stop();
+    } catch {}
+    setScanning(false);
+    await processScan(decodedText);
+  };
+
   const startScan = async () => {
-    setScanning(true);
     setResult(null);
+    setScanning(true);
+
+    // Esperar a que React pinte el div #reader
+    await new Promise((r) => setTimeout(r, 100));
 
     const scanner = new Html5Qrcode('reader');
     scannerRef.current = scanner;
 
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
     try {
-      await scanner.start(
-        { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        async (decodedText) => {
-          await scanner.stop();
-          setScanning(false);
-          await processScan(decodedText);
-        },
-        () => {}
-      );
+      await scanner.start({ facingMode: 'environment' }, config, onScanSuccess, () => {});
     } catch (err) {
-      console.error('Error starting scanner:', err);
-      setScanning(false);
-      setResult({ success: false, message: 'Error al iniciar la cámara' });
+      // En ordenadores no hay cámara "trasera": reintentar con cualquier cámara
+      try {
+        await scanner.start({}, config, onScanSuccess, () => {});
+      } catch (err2) {
+        console.error('Error starting scanner:', err2);
+        setScanning(false);
+        setResult({
+          success: false,
+          message: 'No se pudo acceder a la cámara. Revisa los permisos del navegador.',
+        });
+      }
     }
   };
 
