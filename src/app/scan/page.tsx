@@ -1,9 +1,56 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+
+const CONFETTI_COLORS = ['#f59e0b', '#ef4444', '#22c55e', '#3b82f6', '#eab308', '#ec4899', '#ffffff'];
+
+function Confetti() {
+  const pieces = useMemo(
+    () =>
+      Array.from({ length: 60 }, (_, i) => ({
+        left: Math.random() * 100,
+        size: 6 + Math.random() * 8,
+        color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+        duration: 2.2 + Math.random() * 1.8,
+        delay: Math.random() * 0.6,
+        round: Math.random() > 0.5,
+      })),
+    []
+  );
+
+  return (
+    <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden">
+      {pieces.map((p, i) => (
+        <span
+          key={i}
+          className="confetti-piece"
+          style={{
+            left: `${p.left}%`,
+            width: p.size,
+            height: p.round ? p.size : p.size * 0.5,
+            backgroundColor: p.color,
+            borderRadius: p.round ? '50%' : '2px',
+            animationDuration: `${p.duration}s`,
+            animationDelay: `${p.delay}s`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function AnimatedCheck({ big }: { big?: boolean }) {
+  const size = big ? 96 : 72;
+  return (
+    <svg width={size} height={size} viewBox="0 0 52 52" className="mx-auto">
+      <circle cx="26" cy="26" r="24" fill="none" stroke="currentColor" strokeWidth="2.5" className="check-circle" />
+      <path fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" d="M14 27l8 8 16-16" className="check-mark" />
+    </svg>
+  );
+}
 
 export default function ScanPage() {
   const [scanning, setScanning] = useState(false);
@@ -75,6 +122,9 @@ export default function ScanPage() {
       const data = await res.json();
 
       if (res.ok) {
+        try {
+          navigator.vibrate?.(data.premio ? [80, 60, 80, 60, 200] : 120);
+        } catch {}
         setResult({
           success: true,
           message: data.message,
@@ -129,32 +179,33 @@ export default function ScanPage() {
           )}
 
           {result && (
-            <div
-              className={`rounded-3xl p-8 text-center text-white ${
-                result.premio ? 'bg-green-600' : result.success ? 'bg-ink' : 'bg-red-600'
-              }`}
-            >
-              {result.premio && (
-                <div className="mb-4">
-                  <svg className="mx-auto h-20 w-20 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-              )}
-              <h2 className="mb-3 font-display text-3xl">
-                {result.premio ? '¡Premio!' : result.success ? '¡Sello añadido!' : 'Error'}
-              </h2>
-              <p className="mb-6 text-lg opacity-90">{result.message}</p>
-              <button
-                onClick={() => {
-                  setResult(null);
-                  startScan();
-                }}
-                className="w-full rounded-full bg-white py-3 font-semibold text-ink transition hover:bg-stone-100"
+            <>
+              {result.premio && <Confetti />}
+              <div
+                className={`animate-stamp-pop rounded-3xl p-8 text-center text-white ${
+                  result.premio ? 'bg-green-600' : result.success ? 'bg-ink' : 'bg-red-600'
+                }`}
               >
-                Escanear otro
-              </button>
-            </div>
+                {result.success && (
+                  <div className="mb-4 text-white">
+                    <AnimatedCheck big={result.premio} />
+                  </div>
+                )}
+                <h2 className="mb-3 font-display text-3xl">
+                  {result.premio ? '¡Premio!' : result.success ? '¡Sello añadido!' : 'Error'}
+                </h2>
+                <p className="mb-6 text-lg opacity-90">{result.message}</p>
+                <button
+                  onClick={() => {
+                    setResult(null);
+                    startScan();
+                  }}
+                  className="w-full rounded-full bg-white py-3 font-semibold text-ink transition hover:bg-stone-100"
+                >
+                  Escanear otro
+                </button>
+              </div>
+            </>
           )}
         </div>
       </main>
