@@ -1053,3 +1053,22 @@ npx tsx prisma/seed.ts
 4. **Proximidad**: al dar de alta el comercio real con lat/lng, Google Wallet avisa automáticamente al pasar cerca (el texto de la notificación lo pone Google; el `mensajeProximidad` personalizado solo se usa en Apple Wallet)
 5. **Apple Wallet**: cuando se pague la licencia Apple Developer ($99/año) — toda la infraestructura ya está en el código (`src/lib/apple/`, endpoints `/api/apple/v1/*`)
 6. **Legal antes de cobrar**: página de privacidad/términos en la web (RGPD) — Google y los comercios lo pedirán
+
+---
+
+# 🔑 FIX CRÍTICO (24 sept 2026): endpoint de guardado de Google Wallet
+
+El 404 de los save links NO era el modo demo: **Google retiró el endpoint `pay.google.com/gp/w/save/`**. El formato actual es:
+
+```
+https://pay.google.com/gp/v/save/{JWT}   ← correcto (302 → login → guardar)
+https://pay.google.com/gp/w/save/{JWT}   ← retirado (404 genérico siempre)
+```
+
+Corregido en `src/lib/google/index.ts` → `generateGoogleSaveUrl()`. Verificado en producción: el saveUrl devuelve 302 (redirige a login de Google y guarda el pase).
+
+Otros aprendizajes de la investigación:
+- Los JWT deben tener `typ: 'savetowallet'`, `payload.loyaltyObjects: [{ id }]`, `iat`, opcionalmente `origins` y `kid` en header.
+- `viewUnlockRequirement` es inmutable tras crear la clase.
+- Los mensajes de error detallados del save link solo se muestran a cuentas con rol Admin/Developer del emisor.
+- El proyecto local vive ahora en `~/Desktop/CAPTURAS/Stampida/`.
