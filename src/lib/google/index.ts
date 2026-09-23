@@ -225,5 +225,5 @@ export async function generateGoogleSaveUrl(customerId: string) {
     .setExpirationTime('1h')
     .sign(privateKey);
 
-  return `https://pay.google.com/gp/w/save/${jwt}`;
+  return `https://pay.google.com/gp/v/save/${jwt}`;
 }
