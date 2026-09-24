@@ -50,8 +50,8 @@ export async function POST(req: NextRequest) {
     // escáner no espera a Google/Apple, que son lentos.
     const sellosActuales = premio ? 0 : newSellos;
     const notifBody = premio
-      ? `¡Premio conseguido! Canjea tu ${customer.merchant.textoPremio} 🎉`
-      : `¡Sello añadido! Llevas ${sellosActuales}/${customer.merchant.sellosParaPremio} — te quedan ${customer.merchant.sellosParaPremio - sellosActuales} para tu ${customer.merchant.textoPremio}`;
+      ? `¡Premio conseguido! 🎉 ${customer.merchant.textoPremio}`
+      : `¡Sello añadido! Llevas ${sellosActuales}/${customer.merchant.sellosParaPremio}`;
 
     waitUntil(
       (async () => {

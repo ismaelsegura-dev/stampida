@@ -46,12 +46,14 @@ export default function CampaignForm() {
           id="mensaje"
           value={mensaje}
           onChange={(e) => setMensaje(e.target.value)}
-          placeholder="Ej: Hoy café de especialidad al 50% hasta las 12h"
-          rows={3}
+          placeholder="Ej: Café de vainilla al 50% hoy"
+          rows={2}
+          maxLength={80}
           required
         />
-        <p className="mt-1 text-xs text-stone-400">
-          Llegará como notificación al móvil de cada cliente con tu tarjeta
+        <p className="mt-1 flex justify-between text-xs text-stone-400">
+          <span>Corto y directo: se verá entero en la notificación del móvil</span>
+          <span className={mensaje.length > 50 ? 'text-amber-600' : ''}>{mensaje.length}/80</span>
         </p>
       </div>
       {feedback && <p className="text-sm text-stone-600">{feedback}</p>}
