@@ -54,7 +54,7 @@ function AnimatedCheck({ big }: { big?: boolean }) {
 
 export default function ScanPage() {
   const [scanning, setScanning] = useState(false);
-  const [result, setResult] = useState<{ success: boolean; message: string; premio?: boolean } | null>(null);
+  const [result, setResult] = useState<{ success: boolean; message: string; premio?: boolean; pending?: boolean } | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
 
   useEffect(() => {
@@ -103,16 +103,26 @@ export default function ScanPage() {
   };
 
   const processScan = async (url: string) => {
+    let serial: string | null = null;
+    let token: string | null = null;
     try {
       const urlObj = new URL(url);
-      const serial = urlObj.searchParams.get('serial');
-      const token = urlObj.searchParams.get('token');
+      serial = urlObj.searchParams.get('serial');
+      token = urlObj.searchParams.get('token');
+    } catch {}
 
-      if (!serial || !token) {
-        setResult({ success: false, message: 'QR inválido' });
-        return;
-      }
+    if (!serial || !token) {
+      setResult({ success: false, message: 'QR inválido' });
+      return;
+    }
 
+    // Feedback instantáneo: vibración y animación sin esperar al servidor
+    try {
+      navigator.vibrate?.(60);
+    } catch {}
+    setResult({ success: true, message: 'Sincronizando con la tarjeta…', pending: true });
+
+    try {
       const res = await fetch('/api/stamp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -194,7 +204,7 @@ export default function ScanPage() {
                 <h2 className="mb-3 font-display text-3xl">
                   {result.premio ? '¡Premio!' : result.success ? '¡Sello añadido!' : 'Error'}
                 </h2>
-                <p className="mb-6 text-lg opacity-90">{result.message}</p>
+                <p className={`mb-6 text-lg opacity-90 ${result.pending ? 'animate-pulse' : ''}`}>{result.message}</p>
                 <button
                   onClick={() => {
                     setResult(null);

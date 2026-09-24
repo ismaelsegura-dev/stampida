@@ -33,30 +33,41 @@ export async function POST(req: NextRequest) {
 
     const merchant = await prisma.merchant.findUnique({ where: { id: merchantId } });
 
-    for (const customer of customers) {
+    const sendOne = async (customer: (typeof customers)[number]) => {
+      const tasks: Promise<void>[] = [];
+
       if (customer.pushToken) {
-        try {
-          const { sendApplePush } = await import('@/lib/apple');
-          await sendApplePush(customer.pushToken);
-          appleEnviados++;
-        } catch (err) {
-          console.error('Error sending Apple push to customer:', customer.id, err);
-        }
+        tasks.push(
+          import('@/lib/apple').then(({ sendApplePush }) =>
+            sendApplePush(customer.pushToken!).then(() => {
+              appleEnviados++;
+            })
+          )
+        );
       }
 
       if (customer.googleObjectId) {
-        try {
-          const { sendGoogleWalletMessage } = await import('@/lib/google');
-          const ok = await sendGoogleWalletMessage(
-            customer.id,
-            merchant?.nombre || 'Novedad',
-            mensaje
-          );
-          if (ok) googleEnviados++;
-        } catch (err) {
-          console.error('Error sending Google message to customer:', customer.id, err);
-        }
+        tasks.push(
+          import('@/lib/google').then(({ sendGoogleWalletMessage }) =>
+            sendGoogleWalletMessage(customer.id, merchant?.nombre || 'Novedad', mensaje).then((ok) => {
+              if (ok) googleEnviados++;
+            })
+          )
+        );
       }
+
+      await Promise.all(tasks);
+    };
+
+    // Lotes de 10 en paralelo para no saturar la API de Google
+    for (let i = 0; i < customers.length; i += 10) {
+      const batch = customers.slice(i, i + 10);
+      const results = await Promise.allSettled(batch.map(sendOne));
+      results.forEach((r, j) => {
+        if (r.status === 'rejected') {
+          console.error('Error sending campaign to customer:', batch[j].id, r.reason);
+        }
+      });
     }
 
     return NextResponse.json({

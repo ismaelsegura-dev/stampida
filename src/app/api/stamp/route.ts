@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { waitUntil } from '@vercel/functions';
 import { prisma } from '@/lib/prisma';
 import { updateApplePass } from '@/lib/apple';
-import { updateGoogleLoyaltyObject } from '@/lib/google';
+import { updateGoogleLoyaltyObject, sendGoogleWalletMessage } from '@/lib/google';
 
 export async function POST(req: NextRequest) {
   try {
@@ -45,29 +46,25 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    try {
-      await updateApplePass(customer.id);
-    } catch (err) {
-      console.error('Error updating Apple pass:', err);
-    }
+    // Sincronización con los wallets en segundo plano: la respuesta al
+    // escáner no espera a Google/Apple, que son lentos.
+    const sellosActuales = premio ? 0 : newSellos;
+    const notifBody = premio
+      ? `¡Premio conseguido! Canjea tu ${customer.merchant.textoPremio} 🎉`
+      : `¡Sello añadido! Llevas ${sellosActuales}/${customer.merchant.sellosParaPremio} — te quedan ${customer.merchant.sellosParaPremio - sellosActuales} para tu ${customer.merchant.textoPremio}`;
 
-    try {
-      await updateGoogleLoyaltyObject(customer.id);
-    } catch (err) {
-      console.error('Error updating Google pass:', err);
-    }
-
-    // Notificación instantánea al móvil del cliente
-    try {
-      const { sendGoogleWalletMessage } = await import('@/lib/google');
-      const sellosActuales = premio ? 0 : newSellos;
-      const notifBody = premio
-        ? `¡Premio conseguido! Canjea tu ${customer.merchant.textoPremio} 🎉`
-        : `¡Sello añadido! Llevas ${sellosActuales}/${customer.merchant.sellosParaPremio} — te quedan ${customer.merchant.sellosParaPremio - sellosActuales} para tu ${customer.merchant.textoPremio}`;
-      await sendGoogleWalletMessage(customer.id, customer.merchant.nombre, notifBody);
-    } catch (err) {
-      console.error('Error sending stamp notification:', err);
-    }
+    waitUntil(
+      (async () => {
+        const results = await Promise.allSettled([
+          updateApplePass(customer.id),
+          updateGoogleLoyaltyObject(customer.id),
+          sendGoogleWalletMessage(customer.id, customer.merchant.nombre, notifBody),
+        ]);
+        results.forEach((r) => {
+          if (r.status === 'rejected') console.error('Wallet sync error:', r.reason);
+        });
+      })()
+    );
 
     return NextResponse.json({
       success: true,

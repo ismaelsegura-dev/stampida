@@ -163,32 +163,22 @@ export async function updateGoogleLoyaltyObject(customerId: string) {
 export async function sendGoogleWalletMessage(customerId: string, header: string, body: string) {
   const customer = await prisma.customer.findUnique({
     where: { id: customerId },
-    include: { merchant: true },
+    select: { googleObjectId: true },
   });
 
   if (!customer || !customer.googleObjectId) return false;
 
-  const objectUrl = `https://walletobjects.googleapis.com/walletobjects/v1/loyaltyObject/${customer.googleObjectId}`;
-
-  let existingMessages: any[] = [];
-  try {
-    const current: any = await makeRequest('GET', objectUrl);
-    existingMessages = current.messages || [];
-  } catch (e) {
-    return false;
-  }
-
-  const messages = [
-    ...existingMessages,
+  await makeRequest(
+    'POST',
+    `https://walletobjects.googleapis.com/walletobjects/v1/loyaltyObject/${customer.googleObjectId}/addMessage`,
     {
-      id: `msg_${Date.now()}`,
-      header,
-      body,
-      messageType: 'TEXT_AND_NOTIFY',
-    },
-  ].slice(-10);
-
-  await makeRequest('PATCH', objectUrl, { messages });
+      message: {
+        header,
+        body,
+        messageType: 'TEXT_AND_NOTIFY',
+      },
+    }
+  );
   return true;
 }
 
