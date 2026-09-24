@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title: 'Stampida — Fidelización en el wallet de tus clientes',
   description:
     'Tarjetas de fidelización digitales para comercios locales. Sin apps: tus clientes las guardan en Google Wallet y tú controlas todo desde un panel.',
+  icons: { icon: '/icon.svg' },
 };
 
 export default function RootLayout({
