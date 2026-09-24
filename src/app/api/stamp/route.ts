@@ -57,6 +57,18 @@ export async function POST(req: NextRequest) {
       console.error('Error updating Google pass:', err);
     }
 
+    // Notificación instantánea al móvil del cliente
+    try {
+      const { sendGoogleWalletMessage } = await import('@/lib/google');
+      const sellosActuales = premio ? 0 : newSellos;
+      const notifBody = premio
+        ? `¡Premio conseguido! Canjea tu ${customer.merchant.textoPremio} 🎉`
+        : `¡Sello añadido! Llevas ${sellosActuales}/${customer.merchant.sellosParaPremio} — te quedan ${customer.merchant.sellosParaPremio - sellosActuales} para tu ${customer.merchant.textoPremio}`;
+      await sendGoogleWalletMessage(customer.id, customer.merchant.nombre, notifBody);
+    } catch (err) {
+      console.error('Error sending stamp notification:', err);
+    }
+
     return NextResponse.json({
       success: true,
       message,
