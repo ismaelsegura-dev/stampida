@@ -1072,3 +1072,37 @@ Otros aprendizajes de la investigación:
 - `viewUnlockRequirement` es inmutable tras crear la clase.
 - Los mensajes de error detallados del save link solo se muestran a cuentas con rol Admin/Developer del emisor.
 - El proyecto local vive ahora en `~/Desktop/CAPTURAS/Stampida/`.
+
+---
+
+# 📅 SESIÓN: Notificaciones push reales + rendimiento (24 sept 2026)
+
+## ✅ Estado: flujo completo funcionando en producción
+
+Guardar tarjeta en Google Wallet **funciona de verdad** en el Motorola del usuario (tras el fix `gp/v/save`). Los sellos se añaden correctamente y las notificaciones push **llegan** al móvil.
+
+## 🔔 Notificaciones push — cómo funciona (no deshacer)
+
+- **Trigger de sello**: `POST /api/stamp` → tras escribir en BD, en segundo plano llama `sendGoogleWalletMessage()` con el nombre del comercio como `header`.
+- **Endpoint usado**: `POST walletobjects.googleapis.com/walletobjects/v1/loyaltyObject/{id}/addMessage` con `{ message: { header, body, messageType: 'TEXT_AND_NOTIFY' } }` — UNA petición, sin GET previo (antes se hacía GET + PATCH de todo el array `messages`, doble roundtrip).
+- **Campañas masivas**: mismo mecanismo en bucle, en lotes de 10 en paralelo (`Promise.allSettled`).
+- **Formato de la notificación**: título = `header` (nombre del comercio), línea = `body`. Android colapsa notificaciones a 1 línea → los `body` deben ser CORTOS (≤50 chars visibles sin expandir). El formulario de campañas tiene `maxLength=80` y contador con aviso >50.
+- **Modo Demo**: Google guarda el mensaje en el pase y la notificación llega, pero puede tardar. El renderizado (expandida/colapsada) lo decide Android, no se puede forzar.
+- Verificado por API: los mensajes quedan escritos en el objeto (`messageType: textAndNotify`), `hasUsers: true`, `state: active`.
+
+## ⚡ Rendimiento (24 sept) — sellos instantáneos
+
+Antes `/api/stamp` tardaba varios segundos porque esperaba secuencialmente a Apple + Google (2 llamadas) + mensaje. Ahora:
+
+1. **Respuesta inmediata**: tras el commit en BD se responde al escáner sin esperar a los wallets. La sincronización corre en `waitUntil()` de `@vercel/functions` (nueva dependencia) con `Promise.allSettled([updateApplePass, updateGoogleLoyaltyObject, sendGoogleWalletMessage])`.
+2. **Escáner optimista** (`/scan/page.tsx`): al leer el QR, vibra (60ms) y muestra la animación del check AL INSTANTE con "Sincronizando con la tarjeta…" (pulse), y cuando llega la respuesta del servidor actualiza texto/sellos/premio (confeti si premio). Errores reales siguen mostrando tarjeta roja.
+3. Campañas: lotes de 10 en paralelo.
+
+## 📌 Pendientes activos
+
+- [ ] Google: aprobación del acceso de publicación (formulario enviado en pay.google.com/business/console) — en espera
+- [ ] Alta de la cafetería cliente real (faltan: nombre, logo, color, premio, lat/lng, email del dueño)
+- [ ] Placas NFC NTAG213 "tap-to-join" (upsell físico, viable; URL del QR de alta + `?via=nfc` para tracking)
+- [ ] Cambiar `BASE_URL`/`NEXTAUTH_URL` en Vercel a `https://www.stampida.online` + redeploy (evita redirect 308 en QR)
+- [ ] Apple Wallet: licencia $99 pendiente (infra ya en código)
+- [ ] Página legal (privacidad/términos RGPD) antes de cobrar
