@@ -14,3 +14,6 @@ certs/*.p12
 !vercel.json
 google-credentials.json
 .vercel
+certs/*.p8
+certs/*.cer
+certs/*.csr

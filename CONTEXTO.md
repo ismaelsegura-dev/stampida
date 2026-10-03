@@ -1106,3 +1106,28 @@ Antes `/api/stamp` tardaba varios segundos porque esperaba secuencialmente a App
 - [ ] Cambiar `BASE_URL`/`NEXTAUTH_URL` en Vercel a `https://www.stampida.online` + redeploy (evita redirect 308 en QR)
 - [ ] Apple Wallet: licencia $99 pendiente (infra ya en código)
 - [ ] Página legal (privacidad/términos RGPD) antes de cobrar
+
+---
+
+# 📅 SESIÓN: Apple Wallet activado (4 oct 2026)
+
+## ✅ Apple Wallet FUNCIONA (firma real verificada en local)
+
+- **Cuenta Apple Developer**: pagada y activa (individual, a nombre personal del usuario — no aparece en las tarjetas).
+- **Pass Type ID**: `pass.com.stampida.loyalty`
+- **Team ID**: `D2QLJH3YGF`
+- **Certificado del pase**: firmado por WWDR **G4** (válido hasta nov 2027) → `certs/pass.pem` + `certs/key.pem`
+- **Clave APNs**: `certs/apns_key.p8`, Key ID `7A439PNVJ5` (configurada Sandbox & Production, Team Scoped)
+- Certificados gitignorados (`certs/*.pem|p8|cer|csr`). En Vercel van como env vars base64: `APPLE_CERT_BASE64`, `APPLE_KEY_BASE64`, `APPLE_WWDR_BASE64`, `APPLE_APN_KEY_BASE64` (ver `src/lib/apple/index.ts` → `readCredential()`).
+
+## Cambios de código
+
+- `src/lib/apple/index.ts`: credenciales por env base64 con fallback a archivos; **iconos incrustados en base64** (icon.png/@2x/@3x — Apple exige icono o el .pkpass no abre); APNs lee `.p8` como Buffer.
+- Script de prueba: `npx tsx --env-file=.env scripts/test-apple.ts` → genera `/tmp/test.pkpass` (verificado: pass.json + manifest + signature + iconos, sin warnings).
+
+## Pendiente Apple
+
+- [ ] Volcar las 8 env vars en Vercel (archivo generado en el Desktop del usuario: `vercel-env-apple.txt`, **borrarlo después**) + redeploy
+- [ ] Probar descarga de .pkpass en un iPhone real vía `/join`
+- [ ] Verificar que el alta en iPhone registra el dispositivo (webServiceURL `/api/apple/v1/`) y que los sellos disparan push APNs
+- [ ] logo.png con el logo de cada comercio (ahora solo icono Stampida + logoText con el nombre)
