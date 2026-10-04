@@ -1,6 +1,7 @@
 import { requireAuth } from '@/lib/auth-server';
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import QRCode from 'qrcode';
 import CampaignForm from './CampaignForm';
 import SettingsForm from './SettingsForm';
@@ -10,6 +11,11 @@ import { Card, CardTitle } from '@/components/ui/card';
 
 export default async function Dashboard() {
   const session = await requireAuth();
+
+  if (session.user.role === 'admin') {
+    redirect('/admin/super');
+  }
+
   const merchantId = session.user.id;
 
   const [merchant, customers, totalCustomers, campaigns, premiosAgg, sellosAgg] =
@@ -60,17 +66,6 @@ export default async function Dashboard() {
             <span className="truncate text-sm text-stone-500">{merchant.nombre}</span>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            {(process.env.SUPERADMIN_EMAIL || '')
-              .split(',')
-              .map((e) => e.trim().toLowerCase())
-              .includes(session.user.email?.toLowerCase() || '') && (
-              <Link
-                href="/admin/super"
-                className="rounded-full border border-line px-4 py-2 text-sm font-medium text-stone-600 transition-colors hover:border-ink hover:text-ink"
-              >
-                Panel general
-              </Link>
-            )}
             <Link
               href="/scan"
               className="rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-stone-800"

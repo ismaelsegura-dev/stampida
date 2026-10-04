@@ -29,9 +29,14 @@ export default function Login() {
     setLoading(false);
 
     if (result?.error) {
-      setError('Credenciales inválidas');
+      setError(
+        result.error === 'EMAIL_NOT_VERIFIED'
+          ? 'Tu cuenta aún no está verificada. Revisa tu email e introduce el código que te enviamos.'
+          : 'Credenciales inválidas'
+      );
     } else {
-      router.push('/admin/dashboard');
+      const session = await fetch('/api/auth/session').then((r) => r.json());
+      router.push(session?.user?.role === 'admin' ? '/admin/super' : '/admin/dashboard');
     }
   };
 

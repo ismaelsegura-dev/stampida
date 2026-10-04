@@ -1141,3 +1141,39 @@ Antes `/api/stamp` tardaba varios segundos porque esperaba secuencialmente a App
 - El dashboard del comercio muestra el enlace "Panel general" solo si el email de sesión es super admin.
 - Fix visual: los números de las tarjetas de métricas ya no usan TAN Astoria (se cortaban los glifos) → sans bold.
 - **Ojo**: el super admin entra con una cuenta de comercio normal registrada con su email; la magia es solo la env var.
+
+---
+
+# 📅 SESIÓN: Sistema de acceso controlado (4 oct 2026)
+
+## Nuevo modelo de acceso (sustituye al SUPERADMIN_EMAIL)
+
+- **Tabla `Admin`** (email+password, sin comercio). Login en `/admin/login` → rol `admin` en sesión → va a `/admin/super`. Comercios → `/admin/dashboard`. El dashboard redirige a admins a `/admin/super`.
+- **Cuenta admin**: `cmismaelsegura@gmail.com` (password entregada al usuario por chat, no en este archivo).
+- **Café Bustia** (muestra de ventas): login ahora `bustia@stampida.online` (misma contraseña que tenía).
+- **Borrada** la cuenta "Stampida HQ" (pruebas). Se mantienen: Café Bustia y Cafetería La Plaza (muestras) y `review@stampida.online` (hasta que Google apruebe).
+
+## Códigos de invitación (registro cerrado)
+
+- Tabla `InviteCode` (`code` STAMP-XXXX-XXXX, nota, usedByMerchantId, usedAt).
+- Super admin genera códigos desde `/admin/super` (botón + nota) y ve su estado (Disponible/Usado · comercio).
+- `/api/auth/register` exige `codigo` válido y sin usar; al registrarlo lo marca usado vinculado al merchant.
+- Primer código creado: STAMP-08FC-BF40 (prueba).
+
+## Verificación de email (Resend)
+
+- Nuevos comercios se crean con `emailVerified: false` (los existentes quedaron en `true` por defecto en el schema, a propósito).
+- Flujo: registro → código de 6 dígitos (tabla `VerificationToken`, 30 min) → email vía Resend → `/admin/register` muestra paso de verificación → `POST /api/auth/verify` → activa.
+- Login bloquea no verificados con error `EMAIL_NOT_VERIFIED` (la página de login muestra mensaje específico).
+- `src/lib/email.ts`: Resend vía fetch (`RESEND_API_KEY`, `EMAIL_FROM`). Sin API key, loguea el código (dev).
+- **Pendiente usuario**: alta en resend.com, verificar dominio stampida.online (DNS), meter `RESEND_API_KEY` en Vercel.
+
+## Borrado de comercios
+
+- `DELETE /api/admin/merchants/[id]` (solo admin): borra en transacción stampEvents → customers → campaigns → libera código de invitación → merchant.
+- UI: botón "Eliminar" → pide escribir `BORRAR` → Confirmar. Sin esa palabra exacta no se borra nada.
+
+## APIs admin (guardadas por `getAdminSession()` en `src/lib/admin-api.ts`)
+
+- `POST /api/admin/invite-codes` — generar código
+- `DELETE /api/admin/merchants/[id]` — borrar comercio

@@ -12,6 +12,7 @@ model Merchant {
   nombre          String
   email           String     @unique
   password        String
+  emailVerified   Boolean    @default(true)
   logoUrl         String?
   colorPrimario   String     @default("#000000")
   sellosParaPremio Int       @default(8)
@@ -25,6 +26,30 @@ model Merchant {
 
   customers       Customer[]
   campaigns       Campaign[]
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+}
+
+model InviteCode {
+  id               String    @id @default(cuid())
+  code             String    @unique
+  nota             String?
+  usedByMerchantId String?   @unique
+  usedAt           DateTime?
+  createdAt        DateTime  @default(now())
+}
+
+model VerificationToken {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
 
 model Customer {

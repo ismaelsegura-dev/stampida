@@ -1,26 +1,15 @@
-import { requireAuth } from '@/lib/auth-server';
+import { requireAdmin } from '@/lib/auth-server';
 import { prisma } from '@/lib/prisma';
-import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import LogoutButton from '../dashboard/LogoutButton';
+import InviteCodeForm from './InviteCodeForm';
+import DeleteMerchantButton from './DeleteMerchantButton';
 import { Card, CardTitle } from '@/components/ui/card';
 
-function isSuperAdmin(email?: string | null) {
-  const allowed = (process.env.SUPERADMIN_EMAIL || '')
-    .split(',')
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  return !!email && allowed.includes(email.toLowerCase());
-}
-
 export default async function SuperAdmin() {
-  const session = await requireAuth();
+  await requireAdmin();
 
-  if (!isSuperAdmin(session.user.email)) {
-    notFound();
-  }
-
-  const [merchants, totalCustomers, sellosAgg, premiosAgg, totalCampaigns] =
+  const [merchants, totalCustomers, sellosAgg, premiosAgg, totalCampaigns, inviteCodes] =
     await Promise.all([
       prisma.merchant.findMany({
         orderBy: { createdAt: 'desc' },
@@ -30,7 +19,10 @@ export default async function SuperAdmin() {
       prisma.customer.aggregate({ _sum: { sellos: true } }),
       prisma.customer.aggregate({ _sum: { premiosCanjeados: true } }),
       prisma.campaign.count(),
+      prisma.inviteCode.findMany({ orderBy: { createdAt: 'desc' }, take: 30 }),
     ]);
+
+  const merchantNames = new Map(merchants.map((m) => [m.id, m.nombre]));
 
   const stats = [
     { label: 'Comercios', value: merchants.length },
@@ -65,35 +57,77 @@ export default async function SuperAdmin() {
         </div>
 
         <Card>
+          <CardTitle>Códigos de invitación</CardTitle>
+          <p className="mb-4 text-sm text-stone-600">
+            Nadie puede registrar un comercio sin uno de estos códigos. Genera
+            uno por cada venta y entrégaselo al cliente.
+          </p>
+          <InviteCodeForm />
+          {inviteCodes.length > 0 && (
+            <ul className="mt-4 divide-y divide-line border-t border-line">
+              {inviteCodes.map((c) => (
+                <li key={c.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+                  <span className="font-mono font-semibold">{c.code}</span>
+                  <span className="min-w-0 flex-1 truncate text-xs text-stone-500">
+                    {c.nota || ''}
+                  </span>
+                  {c.usedAt ? (
+                    <span className="shrink-0 rounded-full bg-stone-100 px-2.5 py-1 text-xs text-stone-600">
+                      Usado{c.usedByMerchantId && merchantNames.get(c.usedByMerchantId)
+                        ? ` · ${merchantNames.get(c.usedByMerchantId)}`
+                        : ''}
+                    </span>
+                  ) : (
+                    <span className="shrink-0 rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700">
+                      Disponible
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
+        <Card>
           <CardTitle>Comercios</CardTitle>
           <ul className="divide-y divide-line">
             {merchants.map((m) => (
-              <li key={m.id} className="flex flex-wrap items-center gap-3 py-4">
-                <span
-                  className="h-4 w-4 shrink-0 rounded-full border border-line"
-                  style={{ backgroundColor: m.colorPrimario || '#0A0A0A' }}
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">{m.nombre}</p>
-                  <p className="truncate text-xs text-stone-500">{m.email}</p>
-                </div>
-                <div className="flex shrink-0 items-center gap-4 text-sm">
-                  <span className="text-stone-600">
-                    <span className="font-semibold text-ink">{m._count.customers}</span> clientes
-                  </span>
-                  <span className="hidden text-stone-600 sm:inline">
-                    <span className="font-semibold text-ink">{m._count.campaigns}</span> campañas
-                  </span>
-                  <span className="hidden text-xs text-stone-400 md:inline">
-                    Alta {new Date(m.createdAt).toLocaleDateString('es-ES')}
-                  </span>
-                  <Link
-                    href={`/join/${m.id}`}
-                    target="_blank"
-                    className="rounded-full border border-line px-3 py-1.5 text-xs font-medium transition-colors hover:border-ink"
-                  >
-                    Ver alta
-                  </Link>
+              <li key={m.id} className="py-4">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span
+                    className="h-4 w-4 shrink-0 rounded-full border border-line"
+                    style={{ backgroundColor: m.colorPrimario || '#0A0A0A' }}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">
+                      {m.nombre}
+                      {!m.emailVerified && (
+                        <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                          email sin verificar
+                        </span>
+                      )}
+                    </p>
+                    <p className="truncate text-xs text-stone-500">{m.email}</p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-4 text-sm">
+                    <span className="text-stone-600">
+                      <span className="font-semibold text-ink">{m._count.customers}</span> clientes
+                    </span>
+                    <span className="hidden text-stone-600 sm:inline">
+                      <span className="font-semibold text-ink">{m._count.campaigns}</span> campañas
+                    </span>
+                    <span className="hidden text-xs text-stone-400 md:inline">
+                      Alta {new Date(m.createdAt).toLocaleDateString('es-ES')}
+                    </span>
+                    <Link
+                      href={`/join/${m.id}`}
+                      target="_blank"
+                      className="rounded-full border border-line px-3 py-1.5 text-xs font-medium transition-colors hover:border-ink"
+                    >
+                      Ver alta
+                    </Link>
+                    <DeleteMerchantButton merchantId={m.id} nombre={m.nombre} />
+                  </div>
                 </div>
               </li>
             ))}
