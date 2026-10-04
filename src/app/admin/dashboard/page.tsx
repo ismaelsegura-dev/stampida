@@ -60,6 +60,17 @@ export default async function Dashboard() {
             <span className="truncate text-sm text-stone-500">{merchant.nombre}</span>
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            {(process.env.SUPERADMIN_EMAIL || '')
+              .split(',')
+              .map((e) => e.trim().toLowerCase())
+              .includes(session.user.email?.toLowerCase() || '') && (
+              <Link
+                href="/admin/super"
+                className="rounded-full border border-line px-4 py-2 text-sm font-medium text-stone-600 transition-colors hover:border-ink hover:text-ink"
+              >
+                Panel general
+              </Link>
+            )}
             <Link
               href="/scan"
               className="rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-stone-800"
@@ -76,7 +87,7 @@ export default async function Dashboard() {
           {stats.map((s) => (
             <Card key={s.label} className="p-4 sm:p-6">
               <p className="text-xs text-stone-500 sm:text-sm">{s.label}</p>
-              <p className="mt-1 truncate font-display text-2xl sm:text-4xl">{s.value}</p>
+              <p className="mt-1 text-2xl font-bold tracking-tight sm:text-4xl">{s.value}</p>
             </Card>
           ))}
         </div>

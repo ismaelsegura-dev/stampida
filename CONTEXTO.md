@@ -1131,3 +1131,13 @@ Antes `/api/stamp` tardaba varios segundos porque esperaba secuencialmente a App
 - [ ] Probar descarga de .pkpass en un iPhone real vía `/join`
 - [ ] Verificar que el alta en iPhone registra el dispositivo (webServiceURL `/api/apple/v1/`) y que los sellos disparan push APNs
 - [ ] logo.png con el logo de cada comercio (ahora solo icono Stampida + logoText con el nombre)
+
+---
+
+# 📅 Panel Super Admin (4 oct 2026)
+
+- **Ruta**: `/admin/super` — solo accesible si el email de la sesión está en la env var `SUPERADMIN_EMAIL` (admite varios separados por coma). Si no, devuelve 404.
+- **Qué muestra**: comercios totales, clientes totales, sellos activos, premios canjeados, campañas enviadas + lista de comercios (nombre, email, nº clientes, nº campañas, fecha de alta, enlace a su página `/join`).
+- El dashboard del comercio muestra el enlace "Panel general" solo si el email de sesión es super admin.
+- Fix visual: los números de las tarjetas de métricas ya no usan TAN Astoria (se cortaban los glifos) → sans bold.
+- **Ojo**: el super admin entra con una cuenta de comercio normal registrada con su email; la magia es solo la env var.
