@@ -7,6 +7,7 @@ import CampaignForm from './CampaignForm';
 import SettingsForm from './SettingsForm';
 import LogoutButton from './LogoutButton';
 import CopyLink from './CopyLink';
+import DownloadQrButton from './DownloadQrButton';
 import { Card, CardTitle } from '@/components/ui/card';
 
 export default async function Dashboard() {
@@ -90,19 +91,22 @@ export default async function Dashboard() {
         <Card>
           <CardTitle>QR de alta de clientes</CardTitle>
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-8">
-            <a
-              href={joinUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="shrink-0 transition-opacity hover:opacity-80"
-              title="Abrir página de alta"
-            >
-              <img
-                src={qrCode}
-                alt="QR de alta"
-                className="h-44 w-44 rounded-xl border border-line p-2"
-              />
-            </a>
+            <div className="shrink-0">
+              <a
+                href={joinUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block transition-opacity hover:opacity-80"
+                title="Abrir página de alta"
+              >
+                <img
+                  src={qrCode}
+                  alt="QR de alta"
+                  className="h-44 w-44 rounded-xl border border-line p-2"
+                />
+              </a>
+              <DownloadQrButton qrDataUrl={qrCode} nombre={merchant.nombre} />
+            </div>
             <div className="w-full min-w-0 text-center sm:text-left">
               <p className="text-sm text-stone-600">
                 Imprime este QR y colócalo en tu establecimiento. Quien lo
