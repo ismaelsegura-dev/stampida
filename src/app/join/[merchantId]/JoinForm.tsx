@@ -76,23 +76,11 @@ export default function JoinForm({ merchantId, colorPrimario }: JoinFormProps) {
     }
   };
 
-  const handleApple = async () => {
+  const handleApple = () => {
     if (!customerId || walletLoading) return;
-    setError('');
     setWalletLoading('apple');
-    try {
-      const res = await fetch('/api/passes/apple', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customerId }),
-      });
-      if (!res.ok) throw new Error('Apple Wallet no está disponible todavía');
-      const blob = await res.blob();
-      window.location.href = URL.createObjectURL(blob);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error con Apple Wallet');
-      setWalletLoading(null);
-    }
+    // iOS Safari necesita una URL directa al .pkpass; las blob: no abren Wallet
+    window.location.href = `/api/passes/apple?customerId=${customerId}`;
   };
 
   const handleGoogle = async () => {
