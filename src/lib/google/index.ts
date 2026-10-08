@@ -117,6 +117,15 @@ export async function createGoogleLoyaltyObject(customerId: string) {
           description: 'Ver tarjeta',
           id: 'view_card',
         },
+        ...(process.env.REFERRALS_ENABLED === 'true' && customer.merchant.referidosActivos
+          ? [
+              {
+                uri: `${baseUrl}/card/${customer.serialNumber}`,
+                description: 'Invita y gana',
+                id: 'referrals',
+              },
+            ]
+          : []),
         {
           uri: 'https://stampida.online',
           description: 'Powered by Stampida',

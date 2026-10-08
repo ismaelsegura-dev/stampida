@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { referralsEnabled, lookupReferrer, ensureCodigoInvitacion } from '@/lib/referrals';
 import crypto from 'crypto';
 
 export async function POST(req: NextRequest) {
   try {
-    const { merchantId, nombre, telefono } = await req.json();
+    const { merchantId, nombre, telefono, ref } = await req.json();
 
     if (!merchantId || !nombre) {
       return NextResponse.json({ error: 'Faltan campos obligatorios' }, { status: 400 });
@@ -13,6 +14,13 @@ export async function POST(req: NextRequest) {
     const merchant = await prisma.merchant.findUnique({ where: { id: merchantId } });
     if (!merchant) {
       return NextResponse.json({ error: 'Comercio no encontrado' }, { status: 404 });
+    }
+
+    // Referido: solo si la feature está activa y el código es válido para este comercio
+    let invitadoPorId: string | null = null;
+    if (referralsEnabled() && merchant.referidosActivos && typeof ref === 'string' && ref) {
+      const referrer = await lookupReferrer(ref, merchantId);
+      if (referrer) invitadoPorId = referrer.id;
     }
 
     const serialNumber = crypto.randomUUID();
@@ -27,8 +35,11 @@ export async function POST(req: NextRequest) {
         authToken,
         sellos: 0,
         premiosCanjeados: 0,
+        invitadoPorId,
       },
     });
+
+    await ensureCodigoInvitacion(customer.id);
 
     return NextResponse.json({
       id: customer.id,

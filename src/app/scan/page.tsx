@@ -54,7 +54,18 @@ function AnimatedCheck({ big }: { big?: boolean }) {
 
 export default function ScanPage() {
   const [scanning, setScanning] = useState(false);
-  const [result, setResult] = useState<{ success: boolean; message: string; premio?: boolean; pending?: boolean } | null>(null);
+  const [result, setResult] = useState<{
+    success: boolean;
+    message: string;
+    premio?: boolean;
+    pending?: boolean;
+    premiosReferido?: number;
+    textoPremioReferido?: string | null;
+    referralRedeemed?: boolean;
+    serial?: string;
+    token?: string;
+  } | null>(null);
+  const [redeeming, setRedeeming] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
 
   useEffect(() => {
@@ -139,12 +150,41 @@ export default function ScanPage() {
           success: true,
           message: data.message,
           premio: data.premio,
+          premiosReferido: data.premiosReferidoPendientes || 0,
+          textoPremioReferido: data.textoPremioReferido || null,
+          serial,
+          token,
         });
       } else {
         setResult({ success: false, message: data.error || 'Error al procesar' });
       }
     } catch (err) {
       setResult({ success: false, message: 'Error al procesar el QR' });
+    }
+  };
+
+  const redeemReferral = async () => {
+    if (!result?.serial || !result?.token || redeeming) return;
+    setRedeeming(true);
+    try {
+      const res = await fetch('/api/stamp/redeem-referral', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ serial: result.serial, token: result.token }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        try {
+          navigator.vibrate?.([80, 60, 200]);
+        } catch {}
+        setResult((prev) =>
+          prev
+            ? { ...prev, premiosReferido: data.premiosReferidoPendientes, referralRedeemed: true }
+            : prev
+        );
+      }
+    } catch {} finally {
+      setRedeeming(false);
     }
   };
 
@@ -205,6 +245,30 @@ export default function ScanPage() {
                   {result.premio ? '¡Premio!' : result.success ? '¡Sello añadido!' : 'Error'}
                 </h2>
                 <p className={`mb-6 text-lg opacity-90 ${result.pending ? 'animate-pulse' : ''}`}>{result.message}</p>
+
+                {result.success && !result.pending && (result.premiosReferido ?? 0) > 0 && (
+                  <div className="mb-6 rounded-2xl bg-white/15 p-4">
+                    <p className="mb-3 text-sm font-medium">
+                      🎁 Este cliente tiene {result.premiosReferido === 1 ? 'un premio' : `${result.premiosReferido} premios`} de
+                      referidos pendiente{result.premiosReferido === 1 ? '' : 's'}:{' '}
+                      <span className="font-bold">{result.textoPremioReferido}</span>
+                    </p>
+                    <button
+                      onClick={redeemReferral}
+                      disabled={redeeming}
+                      className="w-full rounded-full bg-white py-2.5 text-sm font-semibold text-ink transition hover:bg-stone-100 disabled:opacity-60"
+                    >
+                      {redeeming ? 'Canjeando…' : 'Canjear premio de referidos'}
+                    </button>
+                  </div>
+                )}
+
+                {result.referralRedeemed && (result.premiosReferido ?? 0) === 0 && (
+                  <p className="mb-6 rounded-2xl bg-white/15 p-3 text-sm font-medium">
+                    Premio de referidos canjeado ✓
+                  </p>
+                )}
+
                 <button
                   onClick={() => {
                     setResult(null);

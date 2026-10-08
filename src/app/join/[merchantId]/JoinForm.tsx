@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 interface JoinFormProps {
   merchantId: string;
   colorPrimario: string;
+  refCode?: string | null;
 }
 
 type Platform = 'android' | 'ios' | 'other';
@@ -36,7 +37,7 @@ function GoogleIcon() {
   );
 }
 
-export default function JoinForm({ merchantId, colorPrimario }: JoinFormProps) {
+export default function JoinForm({ merchantId, colorPrimario, refCode }: JoinFormProps) {
   const [nombre, setNombre] = useState('');
   const [telefono, setTelefono] = useState('');
   const [loading, setLoading] = useState(false);
@@ -59,7 +60,7 @@ export default function JoinForm({ merchantId, colorPrimario }: JoinFormProps) {
       const res = await fetch('/api/customers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ merchantId, nombre, telefono }),
+        body: JSON.stringify({ merchantId, nombre, telefono, ref: refCode || undefined }),
       });
 
       if (!res.ok) {

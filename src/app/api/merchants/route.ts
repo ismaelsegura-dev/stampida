@@ -21,6 +21,9 @@ export async function PATCH(req: NextRequest) {
     if (body.radioMetros !== undefined) data.radioMetros = parseInt(body.radioMetros) || 300;
     if (body.lat !== undefined && body.lat !== '') data.lat = parseFloat(body.lat);
     if (body.lng !== undefined && body.lng !== '') data.lng = parseFloat(body.lng);
+    if (body.referidosParaPremio !== undefined) data.referidosParaPremio = parseInt(body.referidosParaPremio) || 3;
+    if (typeof body.textoPremioReferido === 'string') data.textoPremioReferido = body.textoPremioReferido;
+    if (typeof body.referidosActivos === 'boolean') data.referidosActivos = body.referidosActivos;
 
     const merchant = await prisma.merchant.update({
       where: { id: session.user.id },

@@ -13,9 +13,18 @@ interface MerchantSettings {
   lng: string;
   radioMetros: number;
   mensajeProximidad: string;
+  referidosParaPremio: number;
+  textoPremioReferido: string;
+  referidosActivos: boolean;
 }
 
-export default function SettingsForm({ initial }: { initial: MerchantSettings }) {
+export default function SettingsForm({
+  initial,
+  referralsEnabled = false,
+}: {
+  initial: MerchantSettings;
+  referralsEnabled?: boolean;
+}) {
   const [formData, setFormData] = useState<MerchantSettings>(initial);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState('');
@@ -24,7 +33,7 @@ export default function SettingsForm({ initial }: { initial: MerchantSettings })
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === 'sellosParaPremio' || name === 'radioMetros' ? parseInt(value) || 0 : value,
+      [name]: name === 'sellosParaPremio' || name === 'radioMetros' || name === 'referidosParaPremio' ? parseInt(value) || 0 : value,
     }));
   };
 
@@ -138,6 +147,52 @@ export default function SettingsForm({ initial }: { initial: MerchantSettings })
           notificación de cercanía la genera Google con el nombre del comercio.
         </p>
       </div>
+
+      {referralsEnabled && (
+        <div className="rounded-2xl border border-line bg-stone-50 p-4">
+          <p className="mb-3 text-sm font-semibold">Programa de referidos · Invita y gana</p>
+
+          <label className="mb-4 flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="referidosActivos"
+              checked={formData.referidosActivos}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, referidosActivos: e.target.checked }))
+              }
+              className="h-4 w-4 rounded border-stone-300"
+            />
+            Referidos activos
+          </label>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="s-referidosParaPremio">Amigos para premio</Label>
+              <Input
+                id="s-referidosParaPremio"
+                type="number"
+                name="referidosParaPremio"
+                value={formData.referidosParaPremio}
+                onChange={handleChange}
+                min="1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="s-textoPremioReferido">Premio por referidos</Label>
+              <Input
+                id="s-textoPremioReferido"
+                name="textoPremioReferido"
+                value={formData.textoPremioReferido}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
+          <p className="mt-2 text-xs text-stone-400">
+            El cliente gana el premio cuando los amigos que ha invitado vienen y consumen
+            por primera vez.
+          </p>
+        </div>
+      )}
 
       {feedback && <p className="text-sm text-stone-600">{feedback}</p>}
 

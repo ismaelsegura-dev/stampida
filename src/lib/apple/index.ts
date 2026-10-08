@@ -82,6 +82,15 @@ export async function generateApplePass(customerId: string) {
           label: 'Términos',
           value: `Consigue ${merchant.sellosParaPremio} sellos para obtener: ${merchant.textoPremio}`,
         },
+        ...(process.env.REFERRALS_ENABLED === 'true' && merchant.referidosActivos
+          ? [
+              {
+                key: 'invita',
+                label: 'Invita y gana',
+                value: `Trae ${merchant.referidosParaPremio} amigos y gana: ${merchant.textoPremioReferido}. Comparte desde aquí: ${baseUrl}/card/${customer.serialNumber}`,
+              },
+            ]
+          : []),
       ],
       barcode: {
         message: `${baseUrl}/api/scan?serial=${customer.serialNumber}&token=${customer.authToken}`,

@@ -21,6 +21,9 @@ model Merchant {
   lng             Float?
   radioMetros     Int        @default(300)
   mensajeProximidad String   @default("¡Estás cerca! Pásate y suma tu sello")
+  referidosParaPremio Int    @default(3)
+  textoPremioReferido String @default("Café gratis")
+  referidosActivos  Boolean  @default(true)
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
 
@@ -64,6 +67,12 @@ model Customer {
   premiosCanjeados Int       @default(0)
   pushToken       String?
   googleObjectId  String?
+  invitadoPorId   String?
+  invitadoPor     Customer?  @relation("Referidos", fields: [invitadoPorId], references: [id])
+  invitados       Customer[] @relation("Referidos")
+  amigosTraidos   Int        @default(0)
+  premiosReferidoPendientes Int @default(0)
+  codigoInvitacion String?   @unique
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
 

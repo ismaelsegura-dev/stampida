@@ -9,6 +9,7 @@ import LogoutButton from './LogoutButton';
 import CopyLink from './CopyLink';
 import DownloadQrButton from './DownloadQrButton';
 import { Card, CardTitle } from '@/components/ui/card';
+import { referralsEnabled } from '@/lib/referrals';
 
 export default async function Dashboard() {
   const session = await requireAuth();
@@ -46,6 +47,24 @@ export default async function Dashboard() {
   if (!merchant) {
     return <div>Comercio no encontrado</div>;
   }
+
+  const referralsOn = referralsEnabled() && merchant.referidosActivos;
+
+  const inicioMes = new Date();
+  inicioMes.setDate(1);
+  inicioMes.setHours(0, 0, 0, 0);
+
+  const captadosPorReferidosMes = referralsOn
+    ? await prisma.customer.count({
+        where: { merchantId, invitadoPorId: { not: null }, createdAt: { gte: inicioMes } },
+      })
+    : 0;
+
+  const embajadores = referralsOn
+    ? customers
+        .filter((c) => c.amigosTraidos > 0)
+        .sort((a, b) => b.amigosTraidos - a.amigosTraidos)
+    : [];
 
   const joinUrl = `${process.env.BASE_URL || 'http://localhost:3000'}/join/${merchantId}`;
   const qrCode = await QRCode.toDataURL(joinUrl, { width: 300, margin: 2 });
@@ -123,9 +142,52 @@ export default async function Dashboard() {
           <CampaignForm />
         </Card>
 
+        {referralsOn && (
+          <Card>
+            <CardTitle>Referidos · Invita y gana</CardTitle>
+            <p className="mb-4 text-sm text-stone-600">
+              {captadosPorReferidosMes} clientes captados por referidos este mes. Cada
+              cliente gana <span className="font-semibold">{merchant.textoPremioReferido}</span>{' '}
+              al traer {merchant.referidosParaPremio} amigos que consuman.
+            </p>
+            {embajadores.length > 0 ? (
+              <ul className="divide-y divide-line">
+                {embajadores.map((c, i) => (
+                  <li key={c.id} className="flex items-center gap-3 py-3">
+                    <span className="w-6 shrink-0 text-center text-sm font-bold text-stone-400">
+                      {i + 1}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{c.nombre}</p>
+                      <p className="text-xs text-stone-500">
+                        {c.amigosTraidos} {c.amigosTraidos === 1 ? 'amigo traído' : 'amigos traídos'}
+                      </p>
+                    </div>
+                    <div className="shrink-0 text-right text-xs text-stone-500">
+                      {c.premiosReferidoPendientes > 0 && (
+                        <p className="font-semibold text-green-700">
+                          {c.premiosReferidoPendientes} premio
+                          {c.premiosReferidoPendientes > 1 ? 's' : ''} pendiente
+                          {c.premiosReferidoPendientes > 1 ? 's' : ''}
+                        </p>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="py-4 text-center text-sm text-stone-500">
+                Aún nadie ha traído amigos. Tus clientes pueden compartir su enlace desde la
+                página de su tarjeta.
+              </p>
+            )}
+          </Card>
+        )}
+
         <Card>
           <CardTitle>Personalización de la tarjeta</CardTitle>
           <SettingsForm
+            referralsEnabled={referralsOn}
             initial={{
               logoUrl: merchant.logoUrl || '',
               colorPrimario: merchant.colorPrimario,
@@ -135,6 +197,9 @@ export default async function Dashboard() {
               lng: merchant.lng?.toString() || '',
               radioMetros: merchant.radioMetros,
               mensajeProximidad: merchant.mensajeProximidad,
+              referidosParaPremio: merchant.referidosParaPremio,
+              textoPremioReferido: merchant.textoPremioReferido,
+              referidosActivos: merchant.referidosActivos,
             }}
           />
         </Card>

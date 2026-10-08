@@ -1,14 +1,31 @@
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import JoinForm from './JoinForm';
+import { referralsEnabled, lookupReferrer } from '@/lib/referrals';
 
-export default async function JoinPage({ params }: { params: { merchantId: string } }) {
+export default async function JoinPage({
+  params,
+  searchParams,
+}: {
+  params: { merchantId: string };
+  searchParams: { ref?: string };
+}) {
   const merchant = await prisma.merchant.findUnique({
     where: { id: params.merchantId },
   });
 
   if (!merchant) {
     notFound();
+  }
+
+  let invitadoPorNombre: string | null = null;
+  let ref: string | null = null;
+  if (referralsEnabled() && merchant.referidosActivos && searchParams.ref) {
+    const referrer = await lookupReferrer(searchParams.ref, merchant.id);
+    if (referrer) {
+      invitadoPorNombre = referrer.nombre;
+      ref = searchParams.ref;
+    }
   }
 
   return (
@@ -30,9 +47,14 @@ export default async function JoinPage({ params }: { params: { merchantId: strin
             Consigue {merchant.sellosParaPremio} sellos y obtén:{' '}
             <span className="font-bold">{merchant.textoPremio}</span>
           </p>
+          {invitadoPorNombre && (
+            <p className="mt-3 rounded-full bg-stone-100 px-4 py-2 text-sm font-medium text-gray-800">
+              🎁 ¡Te invita {invitadoPorNombre}!
+            </p>
+          )}
         </div>
 
-        <JoinForm merchantId={merchant.id} colorPrimario={merchant.colorPrimario} />
+        <JoinForm merchantId={merchant.id} colorPrimario={merchant.colorPrimario} refCode={ref} />
 
         <p className="mt-6 text-center text-xs text-gray-400">Powered by Stampida</p>
       </div>

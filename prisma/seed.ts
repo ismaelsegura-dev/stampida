@@ -1,7 +1,14 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
 const prisma = new PrismaClient();
+
+const CODE_ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
+function generateCodigoInvitacion(): string {
+  const bytes = crypto.randomBytes(8);
+  return Array.from(bytes, (b) => CODE_ALPHABET[b % CODE_ALPHABET.length]).join('');
+}
 
 async function main() {
   console.log('Seeding database...');
@@ -22,6 +29,9 @@ async function main() {
       lng: -3.7038,
       radioMetros: 300,
       mensajeProximidad: '¡Estás cerca de La Plaza! Pásate y suma tu sello para un café gratis',
+      referidosParaPremio: 3,
+      textoPremioReferido: 'Café gratis',
+      referidosActivos: true,
     },
   });
 
@@ -43,11 +53,58 @@ async function main() {
         authToken: `token-${Math.random().toString(36).substr(2, 32)}`,
         sellos: customerData.sellos,
         premiosCanjeados: 0,
+        codigoInvitacion: generateCodigoInvitacion(),
       },
     });
 
     console.log('Created customer:', customer.nombre, 'with', customer.sellos, 'stamps');
   }
+
+  // Datos demo de referidos: Lucía ha traído 2 amigos (le queda 1 para el premio)
+  // y Pedro ya ha ganado un premio de referidos pendiente de canjear.
+  const lucia = await prisma.customer.create({
+    data: {
+      merchantId: merchant.id,
+      nombre: 'Lucía Fernández',
+      telefono: '645678901',
+      serialNumber: `DEMO-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      authToken: `token-${Math.random().toString(36).substr(2, 32)}`,
+      sellos: 2,
+      amigosTraidos: 2,
+      codigoInvitacion: generateCodigoInvitacion(),
+    },
+  });
+
+  const pedro = await prisma.customer.create({
+    data: {
+      merchantId: merchant.id,
+      nombre: 'Pedro Sánchez',
+      telefono: '656789012',
+      serialNumber: `DEMO-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      authToken: `token-${Math.random().toString(36).substr(2, 32)}`,
+      sellos: 4,
+      amigosTraidos: 3,
+      premiosReferidoPendientes: 1,
+      codigoInvitacion: generateCodigoInvitacion(),
+    },
+  });
+
+  const invitadosDeLucia = ['Carmen Ruiz', 'Diego Torres'];
+  for (const nombre of invitadosDeLucia) {
+    await prisma.customer.create({
+      data: {
+        merchantId: merchant.id,
+        nombre,
+        serialNumber: `DEMO-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        authToken: `token-${Math.random().toString(36).substr(2, 32)}`,
+        sellos: 1,
+        invitadoPorId: lucia.id,
+        codigoInvitacion: generateCodigoInvitacion(),
+      },
+    });
+  }
+
+  console.log('Created referral demo customers: Lucía (2/3), Pedro (premio pendiente)');
 
   console.log('Seed completed!');
   console.log('');
