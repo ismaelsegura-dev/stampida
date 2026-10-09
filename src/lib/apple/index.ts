@@ -83,12 +83,6 @@ export async function generateApplePass(customerId: string) {
           value: `Consigue ${merchant.sellosParaPremio} sellos para obtener: ${merchant.textoPremio}`,
         },
       ],
-      barcode: {
-        message: `${baseUrl}/api/scan?serial=${customer.serialNumber}&token=${customer.authToken}`,
-        format: 'PKBarcodeFormatQR' as const,
-        messageEncoding: 'iso-8859-1',
-        altText: `${customer.nombre} - ${customer.sellos} sellos`,
-      },
     },
     locations: merchant.lat && merchant.lng ? [
       {
@@ -109,6 +103,14 @@ export async function generateApplePass(customerId: string) {
   };
 
   const pass = new PKPass(fileBuffers, certificates);
+
+  // El QR va por la API de passkit-generator: si se mete en pass.json lo descarta
+  pass.setBarcodes({
+    message: `${baseUrl}/api/scan?serial=${customer.serialNumber}&token=${customer.authToken}`,
+    format: 'PKBarcodeFormatQR',
+    messageEncoding: 'iso-8859-1',
+    altText: `${customer.nombre} - ${customer.sellos} sellos`,
+  });
 
   return pass.getAsBuffer();
 }
