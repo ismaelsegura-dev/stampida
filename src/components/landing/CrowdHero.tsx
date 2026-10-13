@@ -37,7 +37,6 @@ function CrowdCanvas({ src, rows = 15, cols = 7 }: CrowdCanvasProps) {
       rect: number[];
       width: number;
       height: number;
-      s: number;
       x: number;
       y: number;
       anchorY: number;
@@ -53,19 +52,16 @@ function CrowdCanvas({ src, rows = 15, cols = 7 }: CrowdCanvasProps) {
     const resetPeep = (peep: Peep) => {
       const direction = Math.random() > 0.5 ? 1 : -1;
       const offsetY = 100 - 250 * gsap.parseEase('power2.in')(Math.random());
-      // Los que caminan más abajo están más cerca: más grandes
-      peep.s = 0.34 + ((offsetY + 150) / 250) * 0.26;
-      const h = peep.height * peep.s;
-      const startY = stage.height - h + offsetY;
+      const startY = stage.height - peep.height + offsetY;
       let startX: number;
       let endX: number;
 
       if (direction === 1) {
-        startX = -peep.width * peep.s;
+        startX = -peep.width;
         endX = stage.width;
         peep.scaleX = 1;
       } else {
-        startX = stage.width + peep.width * peep.s;
+        startX = stage.width + peep.width;
         endX = 0;
         peep.scaleX = -1;
       }
@@ -102,7 +98,6 @@ function CrowdCanvas({ src, rows = 15, cols = 7 }: CrowdCanvasProps) {
         x: 0,
         y: 0,
         anchorY: 0,
-        s: 1,
         scaleX: 1,
         walk: null,
         setRect: (r: number[]) => {
@@ -113,7 +108,7 @@ function CrowdCanvas({ src, rows = 15, cols = 7 }: CrowdCanvasProps) {
         render: (c: CanvasRenderingContext2D) => {
           c.save();
           c.translate(peep.x, peep.y);
-          c.scale(peep.scaleX * peep.s, peep.s);
+          c.scale(peep.scaleX, 1);
           c.drawImage(
             peep.image,
             peep.rect[0],
@@ -171,10 +166,8 @@ function CrowdCanvas({ src, rows = 15, cols = 7 }: CrowdCanvasProps) {
       availablePeeps.push(peep);
     };
 
-    const MAX_CROWD = 42;
-
     const initCrowd = () => {
-      while (availablePeeps.length && crowd.length < MAX_CROWD) {
+      while (availablePeeps.length) {
         addPeepToCrowd().walk?.progress(Math.random());
       }
     };
