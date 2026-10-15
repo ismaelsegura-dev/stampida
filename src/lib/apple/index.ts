@@ -91,7 +91,10 @@ export async function generateApplePass(customerId: string) {
         relevantText: merchant.mensajeProximidad,
       },
     ] : undefined,
-    webServiceURL: `${baseUrl}/api/apple/v1/`,
+    // Apple añade "v1/" por su cuenta: webServiceURL debe ser la URL base.
+    // (Con ".../v1/" los dispositivos pedían /api/apple/v1/v1/... → 404 y el
+    // pase nunca se registraba para actualizaciones.)
+    webServiceURL: `${baseUrl}/api/apple/`,
     authenticationToken: customer.authToken,
   };
 
