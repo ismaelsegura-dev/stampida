@@ -2,6 +2,7 @@ import { PKPass } from 'passkit-generator';
 import path from 'path';
 import fs from 'fs';
 import { prisma } from '@/lib/prisma';
+import { isProximityMuted } from '@/lib/proximity';
 
 // En Vercel los certificados viajan como env vars en base64 (los archivos
 // certs/ están gitignorados y no se despliegan). En local se usan los archivos.
@@ -28,6 +29,7 @@ export async function generateApplePass(customerId: string) {
   if (!customer) throw new Error('Customer not found');
 
   const { merchant } = customer;
+  const proximityMuted = await isProximityMuted(customer.id);
   const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
   const passTypeIdentifier = process.env.APPLE_PASS_TYPE_IDENTIFIER || 'pass.com.example.stampida';
   const teamIdentifier = process.env.APPLE_TEAM_IDENTIFIER || 'TEAMID';
@@ -84,7 +86,7 @@ export async function generateApplePass(customerId: string) {
         },
       ],
     },
-    locations: merchant.lat && merchant.lng ? [
+    locations: merchant.lat && merchant.lng && !proximityMuted ? [
       {
         latitude: merchant.lat,
         longitude: merchant.lng,
