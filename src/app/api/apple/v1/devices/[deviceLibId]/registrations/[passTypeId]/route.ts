@@ -24,7 +24,9 @@ export async function GET(
     }
 
     const serialNumbers = filteredCustomers.map((c) => c.serialNumber);
-    const lastUpdated = Math.floor(Date.now() / 1000);
+    // Apple exige lastUpdated como STRING; con número iOS ignora la respuesta
+    // y nunca descarga el pase actualizado.
+    const lastUpdated = String(Math.floor(Date.now() / 1000));
 
     return NextResponse.json({
       serialNumbers,
