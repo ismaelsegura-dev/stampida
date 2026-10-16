@@ -4,6 +4,10 @@ import fs from 'fs';
 import { prisma } from '@/lib/prisma';
 import { isProximityMuted } from '@/lib/proximity';
 
+// Fecha del último cambio de PLANTILLA del pase (QR, webServiceURL...).
+// Búmpla cuando cambie algo del pass.json que no dependa de datos del cliente.
+export const PASS_FORMAT_DATE = new Date('2026-10-16T00:00:00Z');
+
 // En Vercel los certificados viajan como env vars en base64 (los archivos
 // certs/ están gitignorados y no se despliegan). En local se usan los archivos.
 function readCredential(envBase64: string | undefined, envPath: string | undefined, defaultPath: string): Buffer {
