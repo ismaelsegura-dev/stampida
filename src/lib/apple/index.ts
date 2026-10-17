@@ -6,7 +6,7 @@ import { isProximityMuted } from '@/lib/proximity';
 
 // Fecha del último cambio de PLANTILLA del pase (QR, webServiceURL...).
 // Búmpla cuando cambie algo del pass.json que no dependa de datos del cliente.
-export const PASS_FORMAT_DATE = new Date('2026-10-16T00:00:00Z');
+export const PASS_FORMAT_DATE = new Date('2026-10-17T00:00:00Z');
 
 // En Vercel los certificados viajan como env vars en base64 (los archivos
 // certs/ están gitignorados y no se despliegan). En local se usan los archivos.
@@ -87,6 +87,11 @@ export async function generateApplePass(customerId: string) {
           key: 'terminos',
           label: 'Términos',
           value: `Consigue ${merchant.sellosParaPremio} sellos para obtener: ${merchant.textoPremio}`,
+        },
+        {
+          key: 'qr-grande',
+          label: '¿No consiguen escanear tu código?',
+          value: `Toca aquí para ver tu QR a pantalla completa: ${baseUrl}/qr/${customer.serialNumber}?t=${customer.authToken}`,
         },
       ],
     },
