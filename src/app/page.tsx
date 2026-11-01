@@ -2,6 +2,7 @@ import Link from 'next/link';
 import CrowdHero from '@/components/landing/CrowdHero';
 import StackedCards, { Step } from '@/components/landing/StackedCards';
 import Reveal from '@/components/landing/Reveal';
+import BusinessShowcase from '@/components/landing/BusinessShowcase';
 
 const CONTACT_MAILTO =
   'mailto:hola@stampida.online?subject=Quiero%20Stampida%20en%20mi%20negocio';
@@ -25,13 +26,6 @@ const pasos: Step[] = [
     texto:
       'Escaneas su tarjeta para dar sellos, y cuando quieras les envías notificaciones al móvil: ofertas, novedades o un simple "te echamos de menos".',
   },
-];
-
-const negocios = [
-  { emoji: '☕', titulo: 'Cafeterías', ejemplo: '9 cafés, el décimo gratis.' },
-  { emoji: '💈', titulo: 'Barberías', ejemplo: '5 cortes y el sexto a mitad de precio.' },
-  { emoji: '🍽️', titulo: 'Restaurantes', ejemplo: 'El menú del día, a las 12:30 en su móvil.' },
-  { emoji: '🛍️', titulo: 'Tiendas', ejemplo: 'Premia a los de siempre.' },
 ];
 
 const claves = [
@@ -89,19 +83,13 @@ export default function Home() {
             <h2 className="mt-3 max-w-xl font-display text-4xl leading-[1.2] tracking-tight sm:text-5xl sm:leading-[1.15]">
               Hecho para el negocio de tu barrio
             </h2>
+            <p className="mt-4 max-w-lg text-ink/60">
+              Elige tu tipo de negocio y mira cómo se vería tu tarjeta y tus
+              mensajes en el móvil de tus clientes.
+            </p>
           </Reveal>
 
-          <div className="mt-12 divide-y divide-ink/10 border-y border-ink/10">
-            {negocios.map((n, i) => (
-              <Reveal key={n.titulo} delay={i * 0.08} y={20}>
-                <div className="flex items-baseline gap-4 py-5">
-                  <span className="text-2xl">{n.emoji}</span>
-                  <h3 className="w-32 shrink-0 font-semibold sm:w-44">{n.titulo}</h3>
-                  <p className="text-sm text-ink/60 sm:text-base">{n.ejemplo}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
+          <BusinessShowcase />
 
           <div className="mt-16 grid gap-10 sm:grid-cols-3">
             {claves.map((c, i) => (
