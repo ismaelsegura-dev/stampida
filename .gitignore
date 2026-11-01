@@ -17,3 +17,4 @@ google-credentials.json
 certs/*.p8
 certs/*.cer
 certs/*.csr
+.env*

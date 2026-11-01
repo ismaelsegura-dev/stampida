@@ -1,5 +1,6 @@
 import { JWT } from 'google-auth-library';
 import { prisma } from '@/lib/prisma';
+import { isProximityMuted } from '@/lib/proximity';
 
 let auth: JWT | null = null;
 
@@ -86,6 +87,7 @@ export async function createGoogleLoyaltyObject(customerId: string) {
   const objectId = `${issuerId}.${customer.serialNumber}`;
 
   const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+  const proximityMuted = await isProximityMuted(customer.id);
 
   const objectData = {
     id: objectId,
@@ -104,7 +106,7 @@ export async function createGoogleLoyaltyObject(customerId: string) {
       value: `${baseUrl}/api/scan?serial=${customer.serialNumber}&token=${customer.authToken}`,
       alternateText: customer.nombre,
     },
-    locations: customer.merchant.lat && customer.merchant.lng ? [
+    locations: customer.merchant.lat && customer.merchant.lng && !proximityMuted ? [
       {
         latitude: customer.merchant.lat,
         longitude: customer.merchant.lng,
@@ -149,6 +151,9 @@ export async function updateGoogleLoyaltyObject(customerId: string) {
 
   if (!customer || !customer.googleObjectId) return;
 
+  const proximityMuted = await isProximityMuted(customerId);
+  const hasLocation = !!(customer.merchant.lat && customer.merchant.lng);
+
   await makeRequest('PATCH', `https://walletobjects.googleapis.com/walletobjects/v1/loyaltyObject/${customer.googleObjectId}`, {
     textModulesData: [
       {
@@ -157,6 +162,15 @@ export async function updateGoogleLoyaltyObject(customerId: string) {
         id: 'stamps',
       },
     ],
+    // Silencio de proximidad post-sello: vaciamos locations (o lo restauramos
+    // cuando la ventana ha pasado). Sin ubicación en el comercio, no tocamos.
+    ...(hasLocation
+      ? {
+          locations: proximityMuted
+            ? []
+            : [{ latitude: customer.merchant.lat, longitude: customer.merchant.lng }],
+        }
+      : {}),
   });
 }
 

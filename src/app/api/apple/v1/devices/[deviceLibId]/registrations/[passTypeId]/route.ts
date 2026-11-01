@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { PASS_FORMAT_DATE } from '@/lib/apple';
 
 export async function GET(
   req: NextRequest,
@@ -20,11 +21,18 @@ export async function GET(
     let filteredCustomers = customers;
     if (passesUpdatedSince) {
       const sinceDate = new Date(parseInt(passesUpdatedSince) * 1000);
-      filteredCustomers = customers.filter((c) => c.updatedAt > sinceDate);
+      // Si el dispositivo sincronizó por última vez antes del último cambio de
+      // plantilla (PASS_FORMAT_DATE), todos los pases se consideran cambiados
+      // aunque los datos del cliente no hayan variado.
+      filteredCustomers = customers.filter(
+        (c) => c.updatedAt > sinceDate || sinceDate < PASS_FORMAT_DATE
+      );
     }
 
     const serialNumbers = filteredCustomers.map((c) => c.serialNumber);
-    const lastUpdated = Math.floor(Date.now() / 1000);
+    // Apple exige lastUpdated como STRING; con número iOS ignora la respuesta
+    // y nunca descarga el pase actualizado.
+    const lastUpdated = String(Math.floor(Date.now() / 1000));
 
     return NextResponse.json({
       serialNumbers,
