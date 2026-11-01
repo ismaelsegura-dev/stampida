@@ -3,9 +3,6 @@
 import { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 
-const CONTACT_MAILTO =
-  'mailto:hola@stampida.online?subject=Quiero%20Stampida%20en%20mi%20negocio';
-
 interface CrowdCanvasProps {
   src: string;
   rows?: number;
@@ -273,7 +270,7 @@ export default function CrowdHero() {
           style={{ opacity: 0 }}
         >
           <a
-            href={CONTACT_MAILTO}
+            href="#empieza"
             className="rounded-full bg-ink px-8 py-3.5 text-sm font-semibold text-ivory transition-colors hover:bg-stone-800"
           >
             Quiero Stampida en mi negocio

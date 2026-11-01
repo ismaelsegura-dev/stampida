@@ -25,9 +25,15 @@ export default function CardBuilder() {
   const [enviando, setEnviando] = useState(false);
   const [enviado, setEnviado] = useState(false);
   const [error, setError] = useState('');
+  const [intentado, setIntentado] = useState(false);
 
   const emailValido = EMAIL_RE.test(email);
-  const completo = negocio.trim().length >= 2 && premio.trim().length >= 3 && emailValido;
+  const negocioOk = negocio.trim().length >= 2;
+  const premioOk = premio.trim().length >= 3;
+  const completo = negocioOk && premioOk && emailValido;
+  const faltaNegocio = intentado && !negocioOk;
+  const faltaPremio = intentado && !premioOk;
+  const faltaEmail = intentado && !emailValido;
   const conseguidos = Math.max(sellos - 1, 0);
   const nombreTarjeta = negocio.trim() || 'Tu negocio';
   const textoPremio = premio.trim() || 'Tu premio de fidelidad';
@@ -39,7 +45,13 @@ export default function CardBuilder() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!completo || enviando) return;
+    if (enviando) return;
+    if (!completo) {
+      setIntentado(true);
+      const id = !negocioOk ? 'cb-negocio' : !premioOk ? 'cb-premio' : 'cb-email';
+      document.getElementById(id)?.focus();
+      return;
+    }
     setEnviando(true);
     setError('');
     try {
@@ -66,8 +78,10 @@ export default function CardBuilder() {
 
   const inputClases =
     'w-full rounded-xl border border-ivory/20 bg-ivory/5 px-4 py-3 text-sm text-ivory placeholder:text-ivory/35 outline-none transition-colors focus:border-ivory/60';
+  const inputErrorClases = ' !border-red-300/80 !bg-red-400/10';
   const labelClases =
     'mb-1.5 block text-[11px] font-semibold uppercase tracking-widest text-ivory/50';
+  const hintClases = 'mt-1.5 text-xs text-red-300';
 
   return (
     <div className="mt-14 grid items-start gap-12 lg:grid-cols-2 lg:gap-16">
@@ -96,8 +110,9 @@ export default function CardBuilder() {
               onChange={(e) => setNegocio(e.target.value)}
               onFocus={() => setFocus('negocio')}
               onBlur={() => setFocus(null)}
-              className={inputClases}
+              className={faltaNegocio ? inputClases + inputErrorClases : inputClases}
             />
+            {faltaNegocio && <p className={hintClases}>¿Cómo se llama tu negocio?</p>}
           </div>
 
           <div>
@@ -170,8 +185,9 @@ export default function CardBuilder() {
               onChange={(e) => setPremio(e.target.value)}
               onFocus={() => setFocus('premio')}
               onBlur={() => setFocus(null)}
-              className={inputClases}
+              className={faltaPremio ? inputClases + inputErrorClases : inputClases}
             />
+            {faltaPremio && <p className={hintClases}>¿Qué premio gana tu cliente?</p>}
           </div>
 
           <div>
@@ -185,23 +201,33 @@ export default function CardBuilder() {
               placeholder="hola@tunegocio.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className={inputClases}
+              className={faltaEmail ? inputClases + inputErrorClases : inputClases}
             />
+            {faltaEmail && (
+              <p className={hintClases}>
+                {email.trim() ? 'Ese email no parece válido' : '¿A qué email te escribimos?'}
+              </p>
+            )}
           </div>
 
           {error && <p className="text-sm text-red-300">{error}</p>}
 
           <button
             type="submit"
-            disabled={!completo || enviando}
+            disabled={enviando}
             className={`mt-2 rounded-full px-8 py-3.5 text-sm font-semibold transition-all ${
               completo && !enviando
                 ? 'bg-ivory text-ink hover:bg-white'
-                : 'cursor-not-allowed bg-ivory/20 text-ivory/50'
+                : 'bg-ivory/40 text-ink/70 hover:bg-ivory/60'
             }`}
           >
-            {enviando ? 'Enviando…' : completo ? '¡La quiero en mi negocio!' : 'Completa los campos'}
+            {enviando ? 'Enviando…' : '¡La quiero en mi negocio!'}
           </button>
+          {!completo && (
+            <p className="text-center text-xs text-ivory/40">
+              Rellena los campos de arriba y es tuya
+            </p>
+          )}
         </form>
       )}
 
