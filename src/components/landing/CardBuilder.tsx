@@ -200,7 +200,7 @@ export default function CardBuilder() {
                 : 'cursor-not-allowed bg-ivory/20 text-ivory/50'
             }`}
           >
-            {enviando ? 'Enviando…' : completo ? 'Quiero esta tarjeta en mi negocio' : 'Completa los campos'}
+            {enviando ? 'Enviando…' : completo ? '¡La quiero en mi negocio!' : 'Completa los campos'}
           </button>
         </form>
       )}
