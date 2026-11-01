@@ -5,9 +5,9 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
-  title: 'Stampida — Fidelización en el wallet de tus clientes',
+  title: 'Stampida — Haz que quieran volver',
   description:
-    'Tarjetas de fidelización digitales para comercios locales. Sin apps: tus clientes las guardan en Google Wallet y tú controlas todo desde un panel.',
+    'Tarjetas de fidelización digitales para cafeterías, barberías y negocios locales. Tus clientes las guardan en Apple Wallet y Google Wallet: sin apps, sin tarjetas de cartón.',
   icons: { icon: '/icon.svg' },
 };
 

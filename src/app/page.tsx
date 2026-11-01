@@ -1,32 +1,142 @@
 import Link from 'next/link';
-import { ShaderBackground } from '@/components/ShaderBackground';
+import CrowdHero from '@/components/landing/CrowdHero';
+import StackedCards, { Step } from '@/components/landing/StackedCards';
+import Reveal from '@/components/landing/Reveal';
+import BusinessShowcase from '@/components/landing/BusinessShowcase';
+import CardBuilder from '@/components/landing/CardBuilder';
+
+const CONTACT_MAILTO =
+  'mailto:hola@stampida.online?subject=Quiero%20Stampida%20en%20mi%20negocio';
+
+const pasos: Step[] = [
+  {
+    n: '01',
+    titulo: 'Enseña tu QR',
+    texto:
+      'Te damos un QR personalizado para tu barra o tu escaparate. Tu cliente lo escanea con la cámara del móvil. Nada más.',
+  },
+  {
+    n: '02',
+    titulo: 'El cliente guarda tu tarjeta',
+    texto:
+      'En dos toques la guarda en Apple Wallet o Google Wallet, con tu logo y tus colores. Sin registrarse, sin descargar ninguna app.',
+  },
+  {
+    n: '03',
+    titulo: 'Suma sellos y haz que vuelvan',
+    texto:
+      'Escaneas su tarjeta para dar sellos, y cuando quieras les envías notificaciones al móvil: ofertas, novedades o un simple "te echamos de menos".',
+  },
+];
+
+const claves = [
+  {
+    titulo: 'Tu cliente no instala nada',
+    texto: 'La tarjeta vive en el wallet que ya lleva en el móvil.',
+  },
+  {
+    titulo: 'Notificaciones al móvil',
+    texto: 'Campañas cuando tú quieras y avisos automáticos cuando pasan cerca.',
+  },
+  {
+    titulo: 'Tu marca, no la nuestra',
+    texto: 'Tu logo, tus colores, tu premio. Sin hardware ni permanencias.',
+  },
+];
 
 export default function Home() {
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden">
-      <ShaderBackground className="absolute inset-0 opacity-60" />
-      <div className="relative z-10 mx-5 max-w-lg rounded-3xl border border-white/50 bg-white/80 px-8 py-12 text-center shadow-xl shadow-stone-900/5 backdrop-blur-xl sm:px-14 sm:py-16">
-        <h1 className="font-display text-6xl tracking-tight text-ink sm:text-8xl">
-          Stampida
-        </h1>
-        <p className="mx-auto mt-4 max-w-sm text-sm text-stone-600 sm:text-base">
-          Tarjetas de fidelización en el wallet de tus clientes
-        </p>
-        <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+    <main className="bg-ivory text-ink">
+      {/* Header */}
+      <header className="absolute top-0 z-20 w-full">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
+          <span className="font-display text-2xl italic tracking-tight">Stampida</span>
+          <nav className="hidden items-center gap-7 text-sm text-ink/70 md:flex">
+            <a href="#como-funciona" className="transition-colors hover:text-ink">
+              Cómo funciona
+            </a>
+            <a href="#negocios" className="transition-colors hover:text-ink">
+              Para quién
+            </a>
+          </nav>
           <Link
             href="/admin/login"
-            className="w-full rounded-full bg-ink px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-stone-800 sm:w-auto"
+            className="rounded-full border border-ink/20 px-4 py-2 text-sm font-medium transition-colors hover:border-ink"
           >
             Acceder
           </Link>
-          <Link
-            href="/admin/register"
-            className="w-full rounded-full border border-stone-300 bg-white/70 px-8 py-3 text-sm font-semibold backdrop-blur transition-colors hover:border-ink sm:w-auto"
-          >
-            Registrar comercio
-          </Link>
         </div>
-      </div>
+      </header>
+
+      {/* Hero: la estampida */}
+      <CrowdHero />
+
+      {/* Cómo funciona: tarjetas apiladas con scroll */}
+      <StackedCards steps={pasos} />
+
+      {/* Para quién + por qué (compacto) */}
+      <section id="negocios" className="scroll-mt-24 border-t border-ink/10 py-24">
+        <div className="mx-auto max-w-6xl px-5">
+          <Reveal>
+            <p className="text-xs font-semibold uppercase tracking-widest text-olive">
+              Para quién
+            </p>
+            <h2 className="mt-3 max-w-xl font-display text-4xl leading-[1.2] tracking-tight sm:text-5xl sm:leading-[1.15]">
+              Hecho para el negocio de tu barrio
+            </h2>
+            <p className="mt-4 max-w-lg text-ink/60">
+              Elige tu tipo de negocio y mira cómo se vería tu tarjeta y tus
+              mensajes en el móvil de tus clientes.
+            </p>
+          </Reveal>
+
+          <BusinessShowcase />
+
+          <div className="mt-16 grid gap-10 sm:grid-cols-3">
+            {claves.map((c, i) => (
+              <Reveal key={c.titulo} delay={i * 0.1} y={30}>
+                <div className="mb-4 h-px w-10 bg-olive" />
+                <h3 className="font-semibold">{c.titulo}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-ink/65">{c.texto}</p>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA final: diseña tu tarjeta en vivo */}
+      <section id="empieza" className="bg-ink py-24 text-ivory">
+        <div className="mx-auto max-w-6xl px-5">
+          <Reveal>
+            <div className="mx-auto max-w-2xl text-center">
+              <p className="font-display text-5xl italic tracking-tight sm:text-6xl">Stampida</p>
+              <h2 className="mt-6 font-display text-3xl leading-[1.2] tracking-tight sm:text-4xl">
+                Diseña tu tarjeta en 10 segundos.
+              </h2>
+              <p className="mx-auto mt-4 max-w-md text-ivory/70">
+                Ponle tu nombre, tus colores y tu premio. Si te gusta lo que ves, te la activamos
+                con tu marca.
+              </p>
+            </div>
+          </Reveal>
+          <CardBuilder />
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-ivory/10 bg-ink py-8 text-ivory/50">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-5 text-xs sm:flex-row">
+          <p>© {new Date().getFullYear()} Stampida · Fidelización digital</p>
+          <div className="flex items-center gap-5">
+            <Link href="/admin/login" className="transition-colors hover:text-ivory">
+              Acceso comercios
+            </Link>
+            <a href={CONTACT_MAILTO} className="transition-colors hover:text-ivory">
+              Contacto
+            </a>
+          </div>
+        </div>
+      </footer>
     </main>
   );
 }
