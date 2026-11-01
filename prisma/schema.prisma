@@ -86,3 +86,13 @@ model Campaign {
   mensaje         String
   enviadaAt       DateTime   @default(now())
 }
+
+model Lead {
+  id        String   @id @default(cuid())
+  negocio   String
+  email     String
+  color     String
+  sellos    Int
+  premio    String
+  createdAt DateTime @default(now())
+}

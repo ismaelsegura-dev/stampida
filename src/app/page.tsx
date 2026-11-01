@@ -3,6 +3,7 @@ import CrowdHero from '@/components/landing/CrowdHero';
 import StackedCards, { Step } from '@/components/landing/StackedCards';
 import Reveal from '@/components/landing/Reveal';
 import BusinessShowcase from '@/components/landing/BusinessShowcase';
+import CardBuilder from '@/components/landing/CardBuilder';
 
 const CONTACT_MAILTO =
   'mailto:hola@stampida.online?subject=Quiero%20Stampida%20en%20mi%20negocio';
@@ -103,26 +104,22 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA final */}
-      <section className="bg-ink py-24 text-center text-ivory">
-        <div className="mx-auto max-w-3xl px-5">
+      {/* CTA final: diseña tu tarjeta en vivo */}
+      <section id="empieza" className="bg-ink py-24 text-ivory">
+        <div className="mx-auto max-w-6xl px-5">
           <Reveal>
-            <p className="font-display text-5xl italic tracking-tight sm:text-6xl">Stampida</p>
-            <h2 className="mt-6 font-display text-3xl leading-[1.2] tracking-tight sm:text-4xl">
-              Haz que quieran volver.
-            </h2>
-            <p className="mx-auto mt-4 max-w-md text-ivory/70">
-              Cuéntanos qué negocio tienes y te preparamos una demo con tu marca.
-              Primer mes de prueba.
-            </p>
-            <a
-              href={CONTACT_MAILTO}
-              className="mt-8 inline-block rounded-full bg-ivory px-8 py-3.5 text-sm font-semibold text-ink transition-colors hover:bg-white"
-            >
-              Quiero Stampida en mi negocio
-            </a>
-            <p className="mt-6 text-xs text-ivory/40">hola@stampida.online</p>
+            <div className="mx-auto max-w-2xl text-center">
+              <p className="font-display text-5xl italic tracking-tight sm:text-6xl">Stampida</p>
+              <h2 className="mt-6 font-display text-3xl leading-[1.2] tracking-tight sm:text-4xl">
+                Diseña tu tarjeta en 10 segundos.
+              </h2>
+              <p className="mx-auto mt-4 max-w-md text-ivory/70">
+                Ponle tu nombre, tus colores y tu premio. Si te gusta lo que ves, te la activamos
+                con tu marca.
+              </p>
+            </div>
           </Reveal>
+          <CardBuilder />
         </div>
       </section>
 
