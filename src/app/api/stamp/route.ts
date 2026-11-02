@@ -3,12 +3,18 @@ import { waitUntil } from '@vercel/functions';
 import { prisma } from '@/lib/prisma';
 import { updateApplePass } from '@/lib/apple';
 import { updateGoogleLoyaltyObject, sendGoogleWalletMessage } from '@/lib/google';
+import { checkRateLimit, clientIp, tooManyRequests } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
   try {
+    // 60/min por IP: de sobra para el ritmo real de una barra, frena abuso.
+    if (!checkRateLimit(`stamp:${clientIp(req)}`, 60, 60 * 1000)) {
+      return tooManyRequests();
+    }
+
     const { serial, token } = await req.json();
 
-    if (!serial || !token) {
+    if (typeof serial !== 'string' || typeof token !== 'string' || serial.length > 64 || token.length > 128) {
       return NextResponse.json({ error: 'Faltan parámetros' }, { status: 400 });
     }
 

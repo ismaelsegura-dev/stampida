@@ -3,8 +3,11 @@ export async function sendVerificationEmail(email: string, code: string) {
   const from = process.env.EMAIL_FROM || 'Stampida <noreply@stampida.online>';
 
   if (!apiKey) {
-    // Sin API key (desarrollo): el código sale por logs
-    console.log(`[email] Código de verificación para ${email}: ${code}`);
+    // Sin API key: el código sale por logs SOLO en desarrollo (nunca en prod,
+    // donde una falta de configuración debe fallar en silencio).
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[email] Código de verificación para ${email}: ${code}`);
+    }
     return false;
   }
 
@@ -48,7 +51,9 @@ export async function sendLeadNotificationEmail(lead: {
   const to = process.env.LEAD_NOTIFY_EMAIL || 'cmismaelsegura@gmail.com';
 
   if (!apiKey) {
-    console.log('[email] Nuevo lead (sin RESEND_API_KEY):', lead);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[email] Nuevo lead (sin RESEND_API_KEY):', lead);
+    }
     return false;
   }
 

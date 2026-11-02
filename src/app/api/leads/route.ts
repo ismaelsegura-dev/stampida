@@ -1,11 +1,15 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { sendLeadNotificationEmail } from '@/lib/email';
+import { checkRateLimit, clientIp, tooManyRequests } from '@/lib/rate-limit';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  if (!checkRateLimit(`leads:${clientIp(req)}`, 10, 10 * 60 * 1000)) {
+    return tooManyRequests();
+  }
   let body: { negocio?: unknown; email?: unknown; color?: unknown; sellos?: unknown; premio?: unknown };
   try {
     body = await req.json();

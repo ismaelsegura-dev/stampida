@@ -6,13 +6,13 @@ import { authOptions } from '@/lib/auth';
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    if (!session?.user?.id || session.user.role !== 'merchant') {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
     const { mensaje } = await req.json();
-    if (!mensaje) {
-      return NextResponse.json({ error: 'Mensaje requerido' }, { status: 400 });
+    if (typeof mensaje !== 'string' || !mensaje.trim() || mensaje.trim().length > 500) {
+      return NextResponse.json({ error: 'Mensaje requerido (máx. 500 caracteres)' }, { status: 400 });
     }
 
     const merchantId = session.user.id;
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     const campaign = await prisma.campaign.create({
       data: {
         merchantId,
-        mensaje,
+        mensaje: mensaje.trim(),
       },
     });
 
