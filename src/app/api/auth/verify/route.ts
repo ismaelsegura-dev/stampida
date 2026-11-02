@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { checkRateLimit, clientIp, tooManyRequests } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
   try {
+    // Anti fuerza-bruta: el código tiene 6 dígitos, sin límite sería
+    // reventable por fuerza bruta en la ventana de 30 min.
+    if (!checkRateLimit(`verify:${clientIp(req)}`, 10, 10 * 60 * 1000)) {
+      return tooManyRequests();
+    }
+
     const { email, code } = await req.json();
 
     if (!email || !code) {

@@ -1,6 +1,7 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { prisma } from '@/lib/prisma';
+import { checkRateLimit } from '@/lib/rate-limit';
 import bcrypt from 'bcryptjs';
 
 export const authOptions: NextAuthOptions = {
@@ -15,6 +16,10 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials?.password) return null;
 
         const email = credentials.email.toLowerCase();
+
+        // Anti fuerza-bruta (ISO 27001 A.9.4.2): máx. 10 intentos por email
+        // cada 10 minutos (por instancia serverless; ver SECURITY.md).
+        if (!checkRateLimit(`login:${email}`, 10, 10 * 60 * 1000)) return null;
 
         // 1. Admins (cuentas sin comercio, acceso al panel general)
         const admin = await prisma.admin.findUnique({ where: { email } });
