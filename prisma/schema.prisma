@@ -60,6 +60,7 @@ model Customer {
   telefono        String?
   serialNumber    String     @unique
   authToken       String     @unique
+  codigoManual    String?    @unique
   sellos          Int        @default(0)
   premiosCanjeados Int       @default(0)
   pushToken       String?

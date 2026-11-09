@@ -12,19 +12,35 @@ export async function POST(req: NextRequest) {
       return tooManyRequests();
     }
 
-    const { serial, token } = await req.json();
+    const { serial, token, codigo } = await req.json();
 
-    if (typeof serial !== 'string' || typeof token !== 'string' || serial.length > 64 || token.length > 128) {
+    const porCodigo = typeof codigo === 'string' && codigo.length > 0;
+
+    if (!porCodigo && (typeof serial !== 'string' || typeof token !== 'string' || serial.length > 64 || token.length > 128)) {
       return NextResponse.json({ error: 'Faltan parámetros' }, { status: 400 });
     }
 
-    const customer = await prisma.customer.findUnique({
-      where: { serialNumber: serial, authToken: token },
-      include: { merchant: true },
-    });
+    let customer = null;
+
+    if (porCodigo) {
+      // Plan B cuando la cámara no lee el QR: la empleada teclea el código
+      // de 4 dígitos que el cliente lleva impreso en su tarjeta.
+      if (!/^\d{4}$/.test(codigo)) {
+        return NextResponse.json({ error: 'Código no válido (4 dígitos)' }, { status: 400 });
+      }
+      customer = await prisma.customer.findUnique({
+        where: { codigoManual: codigo },
+        include: { merchant: true },
+      });
+    } else {
+      customer = await prisma.customer.findUnique({
+        where: { serialNumber: serial, authToken: token },
+        include: { merchant: true },
+      });
+    }
 
     if (!customer) {
-      return NextResponse.json({ error: 'Cliente no encontrado o token inválido' }, { status: 404 });
+      return NextResponse.json({ error: 'Cliente no encontrado o código inválido' }, { status: 404 });
     }
 
     const newSellos = customer.sellos + 1;
@@ -48,7 +64,11 @@ export async function POST(req: NextRequest) {
       data: {
         customerId: customer.id,
         tipo: premio ? 'canje' : 'sello',
-        nota: premio ? `Premio canjeado: ${customer.merchant.textoPremio}` : null,
+        nota: premio
+          ? `Premio canjeado: ${customer.merchant.textoPremio}`
+          : porCodigo
+            ? 'Código manual'
+            : null,
       },
     });
 
