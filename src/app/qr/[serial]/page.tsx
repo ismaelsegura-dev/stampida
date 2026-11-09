@@ -47,6 +47,19 @@ export default async function QRPage({
         Muestra esta pantalla para sumar tu sello. Tienes {customer.sellos} de{' '}
         {customer.merchant.sellosParaPremio}.
       </p>
+      {customer.codigoManual && (
+        <div className="mt-6 rounded-2xl border border-neutral-200 px-8 py-4">
+          <p className="text-xs font-medium uppercase tracking-widest text-neutral-500">
+            Tu código
+          </p>
+          <p className="mt-1 font-mono text-4xl font-bold tracking-[0.3em]">
+            {customer.codigoManual}
+          </p>
+          <p className="mt-2 text-xs text-neutral-400">
+            Si no leen tu QR, dicta este código
+          </p>
+        </div>
+      )}
     </main>
   );
 }

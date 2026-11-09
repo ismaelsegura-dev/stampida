@@ -54,6 +54,8 @@ function AnimatedCheck({ big }: { big?: boolean }) {
 
 export default function ScanPage() {
   const [scanning, setScanning] = useState(false);
+  const [manual, setManual] = useState(false);
+  const [codigo, setCodigo] = useState('');
   const [result, setResult] = useState<{ success: boolean; message: string; premio?: boolean; pending?: boolean } | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
 
@@ -148,6 +150,40 @@ export default function ScanPage() {
     }
   };
 
+  const processManual = async () => {
+    const limpio = codigo.replace(/\D/g, '');
+    if (!/^\d{4}$/.test(limpio)) {
+      setResult({ success: false, message: 'El código tiene 4 dígitos' });
+      return;
+    }
+
+    try {
+      navigator.vibrate?.(60);
+    } catch {}
+    setResult({ success: true, message: 'Sincronizando con la tarjeta…', pending: true });
+
+    try {
+      const res = await fetch('/api/stamp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ codigo: limpio }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        try {
+          navigator.vibrate?.(data.premio ? [80, 60, 80, 60, 200] : 120);
+        } catch {}
+        setResult({ success: true, message: data.message, premio: data.premio });
+      } else {
+        setResult({ success: false, message: data.error || 'Código no encontrado' });
+      }
+    } catch (err) {
+      setResult({ success: false, message: 'Error al validar el código' });
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-paper">
       <header className="border-b border-line">
@@ -165,10 +201,59 @@ export default function ScanPage() {
             Escanear tarjeta
           </h1>
 
-          {!scanning && !result && (
-            <Button onClick={startScan} full>
-              Iniciar escáner
-            </Button>
+          {!scanning && !result && !manual && (
+            <div>
+              <Button onClick={startScan} full>
+                Iniciar escáner
+              </Button>
+              <Button
+                variant="secondary"
+                full
+                className="mt-3"
+                onClick={() => {
+                  setCodigo('');
+                  setManual(true);
+                }}
+              >
+                Introducir código
+              </Button>
+            </div>
+          )}
+
+          {manual && !result && (
+            <div>
+              <p className="mb-4 text-center text-sm text-stone-500">
+                Si la cámara no lee el QR, pide al cliente el código de 4 dígitos de su tarjeta
+              </p>
+              <input
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                maxLength={4}
+                value={codigo}
+                onChange={(e) => setCodigo(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && codigo.length === 4) processManual();
+                }}
+                placeholder="0000"
+                autoFocus
+                className="mb-4 w-full rounded-2xl border border-line bg-white py-4 text-center font-mono text-4xl tracking-[0.5em] outline-none focus:border-ink"
+              />
+              <Button onClick={processManual} full disabled={codigo.length !== 4}>
+                Validar sello
+              </Button>
+              <Button
+                variant="secondary"
+                full
+                className="mt-3"
+                onClick={() => {
+                  setManual(false);
+                  setCodigo('');
+                }}
+              >
+                Volver
+              </Button>
+            </div>
           )}
 
           {scanning && (
@@ -185,6 +270,17 @@ export default function ScanPage() {
               >
                 Cancelar
               </Button>
+              <button
+                className="mt-4 w-full text-center text-sm text-stone-500 underline"
+                onClick={() => {
+                  scannerRef.current?.stop();
+                  setScanning(false);
+                  setCodigo('');
+                  setManual(true);
+                }}
+              >
+                ¿La cámara no lo lee? Introducir código
+              </button>
             </div>
           )}
 
@@ -208,11 +304,22 @@ export default function ScanPage() {
                 <button
                   onClick={() => {
                     setResult(null);
+                    setManual(false);
                     startScan();
                   }}
                   className="w-full rounded-full bg-white py-3 font-semibold text-ink transition hover:bg-stone-100"
                 >
                   Escanear otro
+                </button>
+                <button
+                  onClick={() => {
+                    setResult(null);
+                    setCodigo('');
+                    setManual(true);
+                  }}
+                  className="mt-3 w-full text-center text-sm text-white/80 underline"
+                >
+                  Introducir otro código
                 </button>
               </div>
             </>

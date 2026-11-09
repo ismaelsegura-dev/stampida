@@ -100,6 +100,9 @@ export async function createGoogleLoyaltyObject(customerId: string) {
         body: `${customer.sellos}/${customer.merchant.sellosParaPremio}`,
         id: 'stamps',
       },
+      ...(customer.codigoManual
+        ? [{ header: 'Tu código', body: customer.codigoManual, id: 'manual-code' }]
+        : []),
     ],
     barcode: {
       type: 'QR_CODE',
@@ -161,6 +164,9 @@ export async function updateGoogleLoyaltyObject(customerId: string) {
         body: `${customer.sellos}/${customer.merchant.sellosParaPremio}`,
         id: 'stamps',
       },
+      ...(customer.codigoManual
+        ? [{ header: 'Tu código', body: customer.codigoManual, id: 'manual-code' }]
+        : []),
     ],
     // Silencio de proximidad post-sello: vaciamos locations (o lo restauramos
     // cuando la ventana ha pasado). Sin ubicación en el comercio, no tocamos.
